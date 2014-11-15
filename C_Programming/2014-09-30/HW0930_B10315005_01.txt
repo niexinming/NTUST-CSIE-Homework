@@ -1,0 +1,11 @@
+Enter the distance in miles> 123
+That equals 197.907000 kilometers.
+
+Enter the distance in miles> 456
+That equals 733.704000 kilometers.
+
+Enter the distance in miles> 123.ABC
+That equals 197.907000 kilometers.
+
+Enter the distance in miles> 123.456ABC
+That equals 198.640704 kilometers.
