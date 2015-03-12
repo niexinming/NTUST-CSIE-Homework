@@ -4,8 +4,8 @@ public class Rectangle
 
     public Rectangle(double x, double y, double w, double h)
     {
-        this.x = x;
-        this.y = y;
+        this.x = x - w / 2;
+        this.y = y - h / 2;
         this.w = w;
         this.h = h;
     }
