@@ -4,7 +4,7 @@ import time
 import os
 
 TEMPLATE = '''\
-import java.util.*:
+import java.util.*;
 
 public class %s
 {
