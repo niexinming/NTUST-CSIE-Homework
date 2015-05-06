@@ -1,0 +1,200 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#ifndef APSTUDIO_INVOKED
+#include "targetver.h"
+#endif
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// 中文 (台灣) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHT)
+#ifdef _WIN32
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
+#pragma code_page(950)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#ifndef APSTUDIO_INVOKED\r\n"
+    "#include ""targetver.h""\r\n"
+    "#endif\r\n"
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHT)\r\n"
+    "LANGUAGE 4, 1\r\n"
+    "#pragma code_page(950)\r\n"
+    "#include ""res\\RLC_Circuit.rc2""  // 非 Microsoft Visual C++ 編輯過的資源\r\n"
+    "#include ""l.CHT\\afxres.rc""      // 標準元件\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON                    "res\\RLC_Circuit.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_RLC_CIRCUIT_DIALOG DIALOGEX 0, 0, 329, 222
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
+CAPTION "RLC_Circuit"
+FONT 9, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    CONTROL         131,IDC_STATIC,"Static",SS_BITMAP,0,0,147,113
+    LTEXT           "R :",IDC_STATIC,150,5,16,11
+    LTEXT           "L :",IDC_STATIC,150,20,16,11
+    LTEXT           "C :",IDC_STATIC,150,35,16,11
+    SCROLLBAR       IDC_SCROLLBAR1,166,5,105,10
+    SCROLLBAR       IDC_SCROLLBAR2,166,20,105,10
+    SCROLLBAR       IDC_SCROLLBAR3,166,34,105,10
+    PUSHBUTTON      "Calculate and Draw",IDC_BUTTON1,222,95,73,16
+    LTEXT           "Ohm",IDC_STATIC,306,7,16,11
+    LTEXT           "mH",IDC_STATIC,306,21,16,11
+    LTEXT           "nF",IDC_STATIC,306,34,16,11
+    CTEXT           "100",IDC_R_VALUE,275,7,28,11
+    CTEXT           "10",IDC_L_VALUE,275,21,28,11
+    CTEXT           "100",IDC_C_VALUE,275,34,28,11
+    LTEXT           "I :",IDC_STATIC,149,71,16,11
+    LTEXT           "Vo :",IDC_STATIC,149,86,16,11
+    LTEXT           "Z :",IDC_STATIC,149,101,16,11
+    EDITTEXT        IDC_EDIT1,168,70,26,12,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        IDC_EDIT2,168,85,26,12,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY
+    EDITTEXT        IDC_EDIT3,168,100,26,12,ES_CENTER | ES_AUTOHSCROLL | ES_READONLY
+    LTEXT           "mA",IDC_STATIC,199,71,16,11
+    LTEXT           "V",IDC_STATIC,199,86,16,11
+    LTEXT           "Ohm",IDC_STATIC,199,101,16,11
+    LTEXT           "f :",IDC_STATIC,150,49,16,11
+    SCROLLBAR       IDC_SCROLLBAR4,166,48,105,10
+    LTEXT           "kHz",IDC_STATIC,306,48,16,11
+    CTEXT           "1",IDC_F_VALUE,275,48,28,11
+    CONTROL         "",IDC_I_PIC,"Static",SS_BLACKFRAME,35,132,64,64
+    CONTROL         "",IDC_Vo_PIC,"Static",SS_BLACKFRAME,139,132,64,64
+    CTEXT           "Vo (V)",IDC_STATIC,111,132,22,8
+    CONTROL         "",IDC_Z_PIC,"Static",SS_BLACKFRAME,241,131,64,64
+    CTEXT           "Z (Ohm)",IDC_STATIC,207,131,32,11
+    LTEXT           "log (f)",IDC_STATIC,101,186,20,9
+    LTEXT           "I (mA)",IDC_STATIC,6,134,26,10
+    LTEXT           "log (f)",IDC_STATIC,206,185,20,9
+    LTEXT           "log (f)",IDC_STATIC,307,185,20,9
+    LTEXT           "0",IDC_STATIC,34,199,8,8
+    LTEXT           "6",IDC_STATIC,91,198,8,8
+    LTEXT           "0",IDC_STATIC,138,199,8,8
+    LTEXT           "6",IDC_STATIC,195,199,8,8
+    LTEXT           "0",IDC_STATIC,241,199,8,8
+    LTEXT           "6",IDC_STATIC,298,198,8,8
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040403b6"
+        BEGIN
+            VALUE "CompanyName", "TODO: <公司名稱>"
+            VALUE "FileDescription", "TODO: <檔案說明>"
+            VALUE "FileVersion", "1.0.0.1"
+            VALUE "InternalName", "RLC_Circuit.exe"
+            VALUE "LegalCopyright", "TODO: (c) <公司名稱>.  All rights reserved."
+            VALUE "OriginalFilename", "RLC_Circuit.exe"
+            VALUE "ProductName", "TODO: <產品名稱>"
+            VALUE "ProductVersion", "1.0.0.1"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x404, 950
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_BITMAP1             BITMAP                  "res\\rlc.bmp"
+#endif    // 中文 (台灣) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHT)
+LANGUAGE 4, 1
+#pragma code_page(950)
+#include "res\RLC_Circuit.rc2"  // 非 Microsoft Visual C++ 編輯過的資源
+#include "l.CHT\afxres.rc"      // 標準元件
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
