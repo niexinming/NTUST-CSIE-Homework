@@ -7,7 +7,7 @@ public class HW0521_B10315005_04
         Rational n = new Rational(1);
         for (int i = 2; i <= 100; i += 2) {
             Rational m = new Rational(i - 1, i);
-            n = n.multiply(m);
+            n = n.add(m).simplify();
         }
         System.out.println(n);
     }
