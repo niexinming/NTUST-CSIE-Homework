@@ -1,0 +1,196 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#ifndef APSTUDIO_INVOKED
+#include "targetver.h"
+#endif
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// 中文 (台灣) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHT)
+#ifdef _WIN32
+LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL
+#pragma code_page(950)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#ifndef APSTUDIO_INVOKED\r\n"
+    "#include ""targetver.h""\r\n"
+    "#endif\r\n"
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHT)\r\n"
+    "LANGUAGE 4, 1\r\n"
+    "#pragma code_page(950)\r\n"
+    "#include ""res\\CommonEmitterAmplifier.rc2""  // 非 Microsoft Visual C++ 編輯過的資源\r\n"
+    "#include ""l.CHT\\afxres.rc""      // 標準元件\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON                    "res\\CommonEmitterAmplifier.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_COMMONEMITTERAMPLIFIER_DIALOG DIALOGEX 0, 0, 319, 278
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+EXSTYLE WS_EX_APPWINDOW
+CAPTION "CommonEmitterAmplifier"
+FONT 9, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    CONTROL         129,IDC_STATIC,"Static",SS_BITMAP,0,0,126,147
+    LTEXT           "Type :",IDC_STATIC,129,4,24,10
+    LTEXT           "Amplitude :",IDC_STATIC,129,19,38,10
+    LTEXT           "Frequency :",IDC_STATIC,129,32,38,10
+    LTEXT           "Phase :",IDC_STATIC,129,47,38,10
+    LTEXT           "R1 :",IDC_STATIC,129,61,29,10
+    LTEXT           "R2 :",IDC_STATIC,129,75,29,10
+    LTEXT           "Rc :",IDC_STATIC,129,87,29,10
+    LTEXT           "Re :",IDC_STATIC,129,101,29,10
+    LTEXT           "Beta :",IDC_STATIC,129,115,29,10
+    CONTROL         "Sine",IDC_RADIO1,"Button",BS_AUTORADIOBUTTON | WS_GROUP,174,3,31,14
+    CONTROL         "Square",IDC_RADIO2,"Button",BS_AUTORADIOBUTTON,208,3,34,14
+    CONTROL         "Triangle",IDC_RADIO3,"Button",BS_AUTORADIOBUTTON,250,3,34,14
+    SCROLLBAR       IDC_SCROLLBAR1,173,18,110,10
+    SCROLLBAR       IDC_SCROLLBAR2,173,31,110,10
+    SCROLLBAR       IDC_SCROLLBAR3,173,45,110,10
+    SCROLLBAR       IDC_SCROLLBAR4,173,59,110,10
+    SCROLLBAR       IDC_SCROLLBAR5,173,73,110,10
+    SCROLLBAR       IDC_SCROLLBAR6,173,85,110,10
+    SCROLLBAR       IDC_SCROLLBAR7,173,99,110,10
+    SCROLLBAR       IDC_SCROLLBAR8,173,113,110,10
+    CTEXT           "1",IDC_AMPLITUDE,290,18,22,10
+    CTEXT           "1 k",IDC_FREQUENCY,290,32,22,10
+    CTEXT           "0",IDC_PHASE,290,46,22,10
+    CTEXT           "1 k",IDC_R1,290,60,22,10
+    CTEXT           "1 k",IDC_R2,290,74,22,10
+    CTEXT           "1 k",IDC_RC,290,86,22,10
+    CTEXT           "1 k",IDC_RE,290,100,22,10
+    CTEXT           "50",IDC_BETA,290,113,22,10
+    CONTROL         "",IDC_INPUT,"Static",SS_BLACKFRAME,56,175,73,73
+    CONTROL         "",IDC_OUTPUT,"Static",SS_BLACKFRAME,201,175,73,73
+    LTEXT           "Vi",IDC_STATIC,90,156,16,10
+    LTEXT           "Vo",IDC_STATIC,231,155,16,10
+    LTEXT           "t : 0 (ms)",IDC_CURRENT_TIME,131,256,47,10
+    CTEXT           "Max",IDC_VI_MAX,19,175,31,10
+    CTEXT           "Min",IDC_VI_MIN,20,241,30,10
+    CTEXT           "Max",IDC_VO_MAX,161,175,31,10
+    CTEXT           "Min",IDC_VO_MIN,162,242,30,10
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040403b6"
+        BEGIN
+            VALUE "CompanyName", "TODO: <公司名稱>"
+            VALUE "FileDescription", "TODO: <檔案說明>"
+            VALUE "FileVersion", "1.0.0.1"
+            VALUE "InternalName", "CommonEmitterAmplifier.exe"
+            VALUE "LegalCopyright", "TODO: (c) <公司名稱>.  All rights reserved."
+            VALUE "OriginalFilename", "CommonEmitterAmplifier.exe"
+            VALUE "ProductName", "TODO: <產品名稱>"
+            VALUE "ProductVersion", "1.0.0.1"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x404, 950
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_BITMAP1             BITMAP                  "res\\CE.bmp"
+#endif    // 中文 (台灣) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHT)
+LANGUAGE 4, 1
+#pragma code_page(950)
+#include "res\CommonEmitterAmplifier.rc2"  // 非 Microsoft Visual C++ 編輯過的資源
+#include "l.CHT\afxres.rc"      // 標準元件
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
