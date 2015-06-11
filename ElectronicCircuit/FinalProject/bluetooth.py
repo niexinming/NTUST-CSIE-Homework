@@ -1,6 +1,10 @@
 import time
 import serial
 
+"""
+http://stackoverflow.com/questions/20894969/python-reading-and-writing-to-tty
+"""
+
 class BlueToothSerial(object):
     def __init__(self, tty_name):
         self.ser = serial.Serial()
