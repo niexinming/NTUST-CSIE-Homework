@@ -1,7 +1,7 @@
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <stdint.h>
 
 // #define UNIT_TEST
 
@@ -202,6 +202,7 @@ int main()
 #define TEST_STRSTRSTRINGINGING "Test StrStringinginginging"
 #define bigtext(t) { int r = system("figlet " t); if(r) puts(t); }
 #include <string.h>
+#include <assert.h>
 
 void self_test()
 {
