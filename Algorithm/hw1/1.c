@@ -63,11 +63,11 @@ void find_max_subarray(int low, int high, SEARCH_RESULT *result)
 
     // return best result
     if(left_result.value >= right_result.value && left_result.value >= cross_result.value) {
-        memcpy(result, &left_result, sizeof(SEARCH_RESULT));
+        *result = left_result;
     } else if(right_result.value >= left_result.value && right_result.value >= cross_result.value) {
-        memcpy(result, &right_result, sizeof(SEARCH_RESULT));
+        *result = right_result;
     } else {
-        memcpy(result, &cross_result, sizeof(SEARCH_RESULT));
+        *result = cross_result;
     }
 }
 
