@@ -100,11 +100,7 @@ int main()
         }
 
         // solve the singly connected graph problem
-        if(solve()) {
-            cout << "YES" << endl;
-        } else {
-            cout << "NO" << endl;
-        }
+        cout << (solve() ? "YES" : "NO") << endl;
     }
 
     // free all vertices
