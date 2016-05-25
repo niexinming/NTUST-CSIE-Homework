@@ -5,6 +5,7 @@
 
 #define VERTEX_CAP 1000
 
+// VT100 text color definiation, not working under Windows CMD
 #define fgreset     "\x1b[m"
 #define fgcolor(cl) ("\x1b[38;5;" cl "m")
 #define fgblack     fgcolor("0")
@@ -19,6 +20,7 @@
 using namespace std;
 
 #ifdef DEBUG
+// Logging purpose
 stringstream slog;
 #endif
 
@@ -32,16 +34,19 @@ class Node
 
         Node(int id) : id(id), visited(0), walked(false) { }
 
+        // make a connection to some node
         void connect_to(Node *node)
         {
             this->connections.push_back(node);
         }
 
+        // clear all connections
         void clear_connections()
         {
             this->connections.clear();
         }
 
+        // clear visited counter and walked flag
         void clear()
         {
             this->visited = 0;
@@ -51,6 +56,7 @@ class Node
         // return if a node has been visited twice with simple path
         bool dfs()
         {
+            // only simple path is taken, we leave if this node has been visited
             if(this->walked) {
                 return false;
             }
@@ -63,18 +69,22 @@ class Node
             this->walked = true; // set the visited flag for current node
             this->visited++;
 
+            // try every possible path
             for(auto it = this->connections.begin(); it != this->connections.end(); it++) {
 #ifdef DEBUG
                 slog << this->id << " to " << (*it)->id << endl;
 #endif
+                // skip the path to self
                 if(*it == this)
                     continue;
+                // run DFS algorithm recursively
                 if((*it)->dfs()) {
                     this->walked = false;
                     return true;
                 }
             }
 
+            // okey, we are out. nothing is found
             this->walked = false;
             return false;
         }
@@ -95,10 +105,12 @@ bool solve()
         slog << "from node " << i << endl;
 #endif
 
+        // clear visited counter before running DFS
         for(int j = 0; j < C; j++) {
-            vertices[j]->clear(); // clear visited counter
+            vertices[j]->clear();
         }
 
+        // perform DFS from every vertex
         if(vertices[i]->dfs()) {
 #ifdef DEBUG
             cout << slog.str();
@@ -138,6 +150,7 @@ int main()
 #ifdef DEBUG
         cout << fgyellow << "round #" << ++round << fgreset << endl;
 #endif
+        // read every edge in this test case
         while(Es--) {
             cin >> from >> to;
             vertices[from]->connect_to(vertices[to]);
