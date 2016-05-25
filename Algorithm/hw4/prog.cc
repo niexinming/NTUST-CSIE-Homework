@@ -21,41 +21,54 @@ class Node
 {
     public:
         int id;
-        bool visited;
+        int visited;
+        bool walked;
         vector<Node*> connections;
-        Node(int id) : id(id) { }
 
-        void connect_to(Node *node) {
+        Node(int id) : id(id), visited(0), walked(false) { }
+
+        void connect_to(Node *node)
+        {
             this->connections.push_back(node);
         }
 
-        void clear() {
+        void clear_connections()
+        {
             this->connections.clear();
-            this->visited = false;
         }
 
-        // return if a node has been visited twice
-        // we must clear the visited flag before returning
+        void clear()
+        {
+            this->visited = 0;
+            this->walked = false;
+        }
+
+        // return if a node has been visited twice with simple path
         bool dfs()
         {
-            if(this->visited) {
-                this->visited = false;
-                return true; // we found a node visited twice!
+            if(this->walked) {
+                return false;
             }
 
-            this->visited = true; // set the visited flag for current node
+            // Oops, we visited this node before
+            if(this->visited >= 1) {
+                return true;
+            }
+
+            this->walked = true; // set the visited flag for current node
+            this->visited++;
 
             for(auto it = this->connections.begin(); it != this->connections.end(); it++) {
                 if(LOGGING) cout << this->id << " to " << (*it)->id << endl;
                 if(*it == this)
                     continue;
                 if((*it)->dfs()) {
-                    this->visited = false;
+                    this->walked = false;
                     return true;
                 }
             }
 
-            this->visited = false;
+            this->walked = false;
             return false;
         }
 };
@@ -71,6 +84,11 @@ bool solve()
 {
     for(int i = 0; i < C; i++) {
         if(LOGGING) cout << endl << "from node " << i << endl;
+
+        for(int j = 0; j < C; j++) {
+            vertices[j]->clear(); // clear visited counter
+        }
+
         if(vertices[i]->dfs()) {
             return false; // this is NOT a singly connected graph
         }
@@ -101,7 +119,7 @@ int main()
         cin >> C >> Es;
         // clear all vertices which would be used
         for(i = 0; i < C; i++) {
-            vertices[i]->clear();
+            vertices[i]->clear_connections();
         }
 
         if(LOGGING) cout << "round #" << ++round << endl;
