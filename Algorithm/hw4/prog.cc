@@ -4,6 +4,17 @@
 
 #define VERTEX_CAP 1000
 
+#define fgreset     "\x1b[m"
+#define fgcolor(cl) ("\x1b[38;5;" cl "m")
+#define fgblack     fgcolor("0")
+#define fgred       fgcolor("1")
+#define fggreen     fgcolor("2")
+#define fgyellow    fgcolor("3")
+#define fgblue      fgcolor("4")
+#define fgmagenta   fgcolor("5")
+#define fgcyan      fgcolor("6")
+#define fgwhite     fgcolor("7")
+
 using namespace std;
 
 class Node
