@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <sstream>
 
 #define VERTEX_CAP 1000
 
@@ -16,6 +17,10 @@
 #define fgwhite     fgcolor("7")
 
 using namespace std;
+
+#ifdef DEBUG
+stringstream slog;
+#endif
 
 class Node
 {
@@ -59,7 +64,9 @@ class Node
             this->visited++;
 
             for(auto it = this->connections.begin(); it != this->connections.end(); it++) {
-                if(LOGGING) cout << this->id << " to " << (*it)->id << endl;
+#ifdef DEBUG
+                slog << this->id << " to " << (*it)->id << endl;
+#endif
                 if(*it == this)
                     continue;
                 if((*it)->dfs()) {
@@ -83,13 +90,19 @@ int C;
 bool solve()
 {
     for(int i = 0; i < C; i++) {
-        if(LOGGING) cout << endl << "from node " << i << endl;
+#ifdef DEBUG
+        slog = stringstream();
+        slog << "from node " << i << endl;
+#endif
 
         for(int j = 0; j < C; j++) {
             vertices[j]->clear(); // clear visited counter
         }
 
         if(vertices[i]->dfs()) {
+#ifdef DEBUG
+            cout << slog.str();
+#endif
             return false; // this is NOT a singly connected graph
         }
     }
@@ -122,7 +135,9 @@ int main()
             vertices[i]->clear_connections();
         }
 
-        if(LOGGING) cout << "round #" << ++round << endl;
+#ifdef DEBUG
+        cout << fgyellow << "round #" << ++round << fgreset << endl;
+#endif
         while(Es--) {
             cin >> from >> to;
             vertices[from]->connect_to(vertices[to]);
