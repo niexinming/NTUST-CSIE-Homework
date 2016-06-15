@@ -20,8 +20,6 @@ typedef struct {
     int data[0];
 } QUEUE;
 
-int V, E, from, to;
-
 QUEUE* Q_create(int cap)
 {
     QUEUE *queue = (QUEUE*)malloc(sizeof(QUEUE) + sizeof(int) * cap);
@@ -74,6 +72,8 @@ int Q_data(QUEUE *queue, int offset)
 void trace_path(int c)
 {
     int t = -1, n;
+
+    // reverse linked list
     while (c != -1) {
         n = path[c];
         path[c] = t;
@@ -81,6 +81,7 @@ void trace_path(int c)
         c = n;
     }
 
+    // follow the linked list and output path
     c = from;
     while(path[c] != -1)
     {
@@ -89,16 +90,20 @@ void trace_path(int c)
     }
 }
 
+// Vertex count, Edge count, start vertex, target vertex
+int V, E, from, to;
 void solve()
 {
     int i, current_v;
-    QUEUE *queue = Q_create(65536);
+    QUEUE *queue = Q_create(0x1000000); // takes about 64MB of memory
 
-    Q_enqueue(queue, from);
+    // initialize first vertex
     visited[from] = 1;
     path[from] = -1;
     best_prob[from] = 1.0;
+    Q_enqueue(queue, from);
 
+    // BFS algorithm
     while(Q_count(queue) > 0) {
         current_v = Q_deque(queue);
         for(i = 0; i < V; i++) {
@@ -118,12 +123,15 @@ void solve()
         }
     }
 
+    // inverse path output path
     trace_path(to);
     printf("%g\n", best_prob[to]);
 
+    // destory queue
     Q_free(queue);
 }
 
+// initialize all data structure
 void init()
 {
     memset(is_connected, 0, sizeof is_connected);
@@ -135,20 +143,28 @@ void init()
 
 int main()
 {
+    // redirect input.txt to standard input
     freopen("input.txt", "r", stdin);
+
     int N, i, a, b;
     double p;
+
     scanf("%d", &N);
+
     while(N-- > 0) {
         init();
         scanf("%d%d", &V, &E);
+
         for(i = 0; i < E; i++) {
             scanf("%d%d%lf", &a, &b, &p);
+
+            // take the better one edge
             if(!is_connected[a][b] || prob[a][b] < p) {
                 is_connected[a][b] = 1;
                 prob[a][b] = p;
             }
         }
+
         scanf("%d%d", &from, &to);
 
         solve();
