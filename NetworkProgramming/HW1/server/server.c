@@ -12,6 +12,9 @@
 #include <unistd.h>
 #include <dirent.h>
 
+uint32_t file_count;
+char **files;
+
 struct remote_peer {
 	struct   sockaddr_in addr;
 	char     ip[16];
@@ -78,22 +81,24 @@ char *recvstr(int fd)
 
 void handle_list(int fd)
 {
-	DIR *dir = opendir(".");
-	struct dirent *curr;
-	int i = 0;
-	while ((curr = readdir(dir)) != NULL) {
-		if(curr->d_name[0] == '.') {
-			continue;
-		}
-		sendstr(fd, curr->d_name);
+	int i;
+	for(i = 0; i < file_count; i++) {
+		sendstr(fd, files[i]);
 	}
 	sendstr(fd, "");
-	closedir(dir);
 }
 
 int handle_download(int fd)
 {
-	char *file = recvstr(fd);
+	int num = -1;
+	readall(fd, &num, 4);
+	if(num < 0 && num >= file_count) {
+		printf("[*] Selection out of range\n");
+		writestr(fd, "");
+		return 1;
+	}
+
+	char *file = files[num];
 	printf("[*] Download: %s\n", file);
 
 	struct stat fs;
@@ -105,7 +110,6 @@ int handle_download(int fd)
 	printf("[*] File size = %u\n", (uint32_t)fs.st_size);
 
 	int fd_f = open(file, O_RDONLY);
-	free(file);
 
 	if(fd_f < 0) {
 		printf("[-] Can not open file\n");
@@ -174,6 +178,15 @@ byebye:
 
 int main(int argc, char *argv[])
 {
+	if(argc < 3) {
+		printf("Usage: %s port file1 [file2 [file3 ...]]\n", argv[0]);
+		return 1;
+	}
+
+	int port_num = atoi(argv[1]);
+	file_count = argc - 2;
+	files = &argv[2];
+
 	int serv_fd = socket(AF_INET, SOCK_STREAM, 0);
 
 	if(serv_fd < 0) {
@@ -191,13 +204,15 @@ int main(int argc, char *argv[])
 	memset(&serv_addr, 0, sizeof serv_addr);
 
 	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_port   = htons(9999);
+	serv_addr.sin_port   = htons(port_num);
 	inet_aton("127.0.0.1", &serv_addr.sin_addr);
 
 	if(bind(serv_fd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) != 0) {
 		fprintf(stderr, "Can not bind address\n");
 		return 1;
 	}
+
+	printf("bind on 127.0.0.1:%d\n", port_num);
 
 	if(listen(serv_fd, 5) != 0) {
 		fprintf(stderr, "Can not listen\n");

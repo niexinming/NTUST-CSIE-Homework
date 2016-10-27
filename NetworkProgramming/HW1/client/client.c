@@ -14,7 +14,7 @@ void error(const char *errmsg)
 	exit(1);
 }
 
-FILE * imgproto_connect(const char *ip)
+FILE * imgproto_connect(const char *ip, int port)
 {
 	int client_fd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -24,7 +24,7 @@ FILE * imgproto_connect(const char *ip)
 
 	struct sockaddr_in conn_addr;
 	conn_addr.sin_family = AF_INET;
-	conn_addr.sin_port = htons(9999);
+	conn_addr.sin_port = htons(port);
 
 	if(inet_pton(AF_INET, ip, &conn_addr.sin_addr) <= 0) {
 		error("Can not convert ip");
@@ -62,6 +62,7 @@ void imgproto_list(FILE *stream)
 	}
 
 	puts("Available files:");
+	int idx = 0;
 	while(1) {
 		size_t sz = 0;
 		if(fread(&sz, 4, 1, stream) != 1) {
@@ -73,20 +74,19 @@ void imgproto_list(FILE *stream)
 		char *buff = malloc(sz + 1);
 		fgets(buff, sz + 1, stream);
 		buff[sz] = 0;
-		printf("- %s\n", buff);
+		printf("%2d: %s\n", idx++, buff);
 		free(buff);
 	}
 }
 
-void imgproto_get(FILE *stream, char *file)
+void imgproto_get(FILE *stream, int which, const char *file)
 {
-	size_t sz = strlen(file);
 	if(fwrite("DWNL", 4, 1, stream) != 1 ||
-		fwrite(&sz, 4, 1, stream) != 1 ||
-		fwrite(file, sz, 1, stream) != 1) {
+		fwrite(&which, 4, 1, stream) != 1) {
 		error("Can not write to socket");
 	}
 
+	size_t sz = 0;
 	if(fread(&sz, 4, 1, stream) != 1) {
 		error("Can not read file size from socket");
 	}
@@ -113,14 +113,27 @@ void imgproto_get(FILE *stream, char *file)
 int main(int argc, char *argv[])
 {
 	const char *ip = "127.0.0.1";
+	int port = 9999;
+	int choosen = 0;
+	const char *filename = "out.dat";
 
-	if(argc > 1) {
-		ip = argv[1];
-	} else {
-		puts("[*] Default connect to localhost");
+	switch(argc) {
+		default:
+			puts("Too many arguments");
+		case 5:
+			filename = argv[4];
+		case 4:
+			choosen = atoi(argv[3]);
+		case 3:
+			port = atoi(argv[2]);
+		case 2:
+			ip = argv[1];
+			break;
+		case 1:
+			printf("Usage: %s ip port choosen filename\n", argv[0]);
 	}
 
-	FILE *stream = imgproto_connect(ip);
+	FILE *stream = imgproto_connect(ip, port);
 
 	if(stream == NULL) {
 		error("Can not connect to host");
@@ -131,19 +144,10 @@ int main(int argc, char *argv[])
 	}
 
 	puts("Connected");
-
 	imgproto_list(stream);
 
-	printf("Which file do you want? ");
-	char buff[64];
-	fgets(buff, 63, stdin);
-	buff[63] = '\0';
-	char *p = buff + strlen(buff) - 1;
-	if(*p == '\n') {
-		*p = '\0';
-	}
-
-	imgproto_get(stream, buff);
+	puts("Download");
+	imgproto_get(stream, choosen, filename);
 	fwrite("EXIT", 4, 1, stream);
 	fclose(stream);
 }
