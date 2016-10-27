@@ -3,4 +3,4 @@ all:
 	gcc client/client.c -o client/client
 
 test:
-	bash -c '(cd server; ./server &); ./client/client'
+	bash -c '(cd server; ./server &); ./client/client; kill %1'
