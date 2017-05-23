@@ -3,6 +3,7 @@
 struct stack {
     int n;
     int data[4096];
+//    int data[64];
 };
 
 void stack_push(struct stack *s, int val) {
@@ -30,6 +31,7 @@ int main () {
                 } else {
                     printf("Error: stack is empty\n");
                 }
+//                printf("Pop -> %d\n", stack_pop(&s));
                 break;
             case 'c':
                 s.n = 0;
