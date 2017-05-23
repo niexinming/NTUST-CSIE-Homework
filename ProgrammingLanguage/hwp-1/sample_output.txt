@@ -1,0 +1,186 @@
+Account <John Smith> now has $1400.0 balance
+
+EXCEPTION: Banking system throws a class BankingException with message:
+	MESSAGE: Underfraft from checking account name:John Smith
+Stack Trace:
+BankingException: Underfraft from checking account name:John Smith
+	at CheckingAccount.withdraw(Account.java:97)
+	at Account.withdraw(Account.java:57)
+	at Application.main(Application.java:23)
+	Account balance remains $1500.0
+
+--------------------------
+Testing round #0
+--------------------------
+- This is a CheckingAccount class
+- Now call computeInterest()
+* Number of days since last interest is 0
++ Interest earned is 0.0
+- Account <A-Checking-Account> now has $1800.00 balance
+- Now call deposit() 2 times
+- Account <A-Checking-Account> now has $882087 balance
+- Now call withdraw() 4 times
+- 1 time withdraw- Account <A-Checking-Account> now has $882007 balance
+- 2 time withdraw- Account <A-Checking-Account> now has $881847 balance
+- 3 time withdraw- Account <A-Checking-Account> now has $881607 balance
+- 4 time withdraw- Account <A-Checking-Account> now has $881287 balance
+- Now call computeInterest()
+* Number of days since last interest is 610
++ Interest earned is 176740.29698630137
+- Account <A-Checking-Account> now has $1.05803e+06 balance
+- Now call withdraw(999999999)
+EXCEPTION: Banking system throws a class BankingException with message:
+	MESSAGE: Underfraft from checking account name:A-Checking-Account
+Stack Trace:
+BankingException: Underfraft from checking account name:A-Checking-Account
+	at CheckingAccount.withdraw(Account.java:97)
+	at Account.withdraw(Account.java:57)
+	at Application.main(Application.java:85)
+	Account balance remains $1058027.2969863014
+
+
+--------------------------
+Testing round #1
+--------------------------
+- This is a SavingAccount class
+- Now call computeInterest()
+* Now computing interest...
+* Number of days since last interest is 0
++ Interest earned is 0.0
+- Account <William Hurt> now has $1200.00 balance
+- Now call deposit() 2 times
+- Account <William Hurt> now has $881485 balance
+- Now call withdraw() 4 times
+- 1 time withdraw+ Withdraw 80.0000 from account William Hurt, now balance is 881405
+- Account <William Hurt> now has $881405 balance
+- 2 time withdraw+ Withdraw 160.000 from account William Hurt, now balance is 881245
+- Account <William Hurt> now has $881245 balance
+- 3 time withdraw+ Withdraw 240.000 from account William Hurt, now balance is 881005
+- Account <William Hurt> now has $881005 balance
+- 4 time withdraw+ Withdraw 320.000 from account William Hurt, now balance is 880685
+- Account <William Hurt> now has $880685 balance
+- Now call computeInterest()
+* Now computing interest...
+* Number of days since last interest is 610
++ Interest earned is 176921.59406732264
+- Account <William Hurt> now has $1.05761e+06 balance
+- Now call withdraw(999999999)
+EXCEPTION: Banking system throws a class BankingException with message:
+	MESSAGE: Underfraft from checking account name:William Hurt
+Stack Trace:
+BankingException: Underfraft from checking account name:William Hurt
+	at SavingAccount.withdraw(Account.java:178)
+	at Account.withdraw(Account.java:57)
+	at Application.main(Application.java:85)
+	Account balance remains $1057606.5940673226
+
+
+--------------------------
+Testing round #2
+--------------------------
+- This is a CDAccount class
+- Now call computeInterest()
+* Now computing interest...
+* Number of days since last interest is 1430
++ Interest earned is 333.0
+- Account <Woody Allison> now has $1333.00 balance
+- Now call deposit() 2 times
+EXCEPTION: Banking system throws a class BankingException with message:
+	MESSAGE: Date has not arrived, you can't deposit money to account: Woody Allison
+Stack Trace:
+BankingException: Date has not arrived, you can't deposit money to account: Woody Allison
+	at CDAccount.deposit(Account.java:233)
+	at Application.main(Application.java:57)
+	Account balance remains $1333.0
+
+- Now call withdraw() 4 times
+- 1 time withdraw+ Withdraw 80.0000 from account Woody Allison, now balance is 1003.00
+- Account <Woody Allison> now has $1003.00 balance
+- 2 time withdraw+ Withdraw 160.000 from account Woody Allison, now balance is 593.000
+- Account <Woody Allison> now has $593.000 balance
+- 3 time withdraw+ Withdraw 240.000 from account Woody Allison, now balance is 103.000
+- Account <Woody Allison> now has $103.000 balance
+- 4 time withdrawEXCEPTION: Banking system throws a class BankingException with message:
+	MESSAGE: Underfraft from checking account name:Woody Allison
+Stack Trace:
+BankingException: Underfraft from checking account name:Woody Allison
+	at CDAccount.withdraw(Account.java:243)
+	at Account.withdraw(Account.java:57)
+	at Application.main(Application.java:68)
+	Account balance remains $103.0
+
+- Now call computeInterest()
+* Now computing interest...
+* Number of days since last interest is 610
+EXCEPTION: Banking system throws a class BankingException with message:
+	MESSAGE: This CDAccount has already gotten it's interest, account name: Woody Allison
+Stack Trace:
+BankingException: This CDAccount has already gotten it's interest, account name: Woody Allison
+	at CDAccount.computeInterest(Account.java:272)
+	at Application.main(Application.java:77)
+	Account balance remains $103.0
+
+- Now call withdraw(999999999)
+EXCEPTION: Banking system throws a class BankingException with message:
+	MESSAGE: Underfraft from checking account name:Woody Allison
+Stack Trace:
+BankingException: Underfraft from checking account name:Woody Allison
+	at CDAccount.withdraw(Account.java:243)
+	at Account.withdraw(Account.java:57)
+	at Application.main(Application.java:85)
+	Account balance remains $103.0
+
+
+--------------------------
+Testing round #3
+--------------------------
+- This is a LoanAccount class
+- Now call computeInterest()
+EXCEPTION: Banking system throws a class BankingException with message:
+	MESSAGE: Loan account do not have interest
+Stack Trace:
+BankingException: Loan account do not have interest
+	at LoanAccount.computeInterest(Account.java:323)
+	at Account.computeInterest(Account.java:64)
+	at Application.main(Application.java:49)
+	Account balance remains $-1500.0
+
+- Now call deposit() 2 times
++ Congratulations, you have paid off your debts!
+EXCEPTION: Banking system throws a class BankingException with message:
+	MESSAGE: You paid too much for loan account: Judi Foster
+Stack Trace:
+BankingException: You paid too much for loan account: Judi Foster
+	at LoanAccount.deposit(Account.java:310)
+	at Application.main(Application.java:58)
+	Account balance remains $0.0
+
+- Now call withdraw() 4 times
+- 1 time withdrawEXCEPTION: Banking system throws a class BankingException with message:
+	MESSAGE: You can not withdraw from a loan account
+Stack Trace:
+BankingException: You can not withdraw from a loan account
+	at LoanAccount.withdraw(Account.java:319)
+	at Account.withdraw(Account.java:57)
+	at Application.main(Application.java:68)
+	Account balance remains $0.0
+
+- Now call computeInterest()
+EXCEPTION: Banking system throws a class BankingException with message:
+	MESSAGE: Loan account do not have interest
+Stack Trace:
+BankingException: Loan account do not have interest
+	at LoanAccount.computeInterest(Account.java:323)
+	at Application.main(Application.java:77)
+	Account balance remains $0.0
+
+- Now call withdraw(999999999)
+EXCEPTION: Banking system throws a class BankingException with message:
+	MESSAGE: You can not withdraw from a loan account
+Stack Trace:
+BankingException: You can not withdraw from a loan account
+	at LoanAccount.withdraw(Account.java:319)
+	at Account.withdraw(Account.java:57)
+	at Application.main(Application.java:85)
+	Account balance remains $0.0
+

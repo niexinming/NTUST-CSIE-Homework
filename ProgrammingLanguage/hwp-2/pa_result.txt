@@ -1,0 +1,16 @@
+# pa1.scm
+
+(1 2 3 3 2 1)
+
+# pa2.scm
+
+Input: (1 2 (3 4) 3 4)
+Input: (2 (3 4) 3 4)
+Input: ((3 4) 3 4)
+Input: (3 4)
+Input: (4)
+Input: ()
+Input: (3 4)
+Input: (4)
+Input: ()
+(1 2 (3 4 4) 3 4 4)
