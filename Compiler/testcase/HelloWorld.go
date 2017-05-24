@@ -1,5 +1,5 @@
 // Hello World Example
 
-func main ( ) {
+func void main ( ) {
     println "Hello World"
 }

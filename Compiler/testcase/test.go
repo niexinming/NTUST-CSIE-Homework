@@ -1,4 +1,4 @@
-func main() {
+func void main() {
 	// array
 	arr = [ 55, 66, 77, true, false, 94.87, 1e6 ]
 
