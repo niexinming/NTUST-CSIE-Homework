@@ -85,8 +85,8 @@ typedef struct AST_ASSIGN_s {
 	struct AST_EXPR_s     *rval;
 } AST_ASSIGN;
 
-typedef struct AST_s {
-	struct AST_s            *next;
+typedef struct AST_NODE_s {
+	struct AST_NODE_s       *next;
 	enum AST_TYPE           type;
 	union {
 		struct AST_VALUE_s  value;

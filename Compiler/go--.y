@@ -24,7 +24,7 @@ void yyerror(const char *errmsg);
     int                    integer;
     double                 real;
     char*                  string;
-    void*                  ast_node;
+    struct AST_NODE_s      *ast_node;
     struct { int t, n; }   data_type;
     struct AST_VAR_s       *var;
 }
