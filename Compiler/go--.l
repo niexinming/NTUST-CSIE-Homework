@@ -1,12 +1,20 @@
 %{
-#define LIST                   { strcat(buf, yytext); colnum += strlen(yytext); }
-#define token(t)               { LIST; token_pretty_print(t, (#t)+6); }
-#define tokenInteger(t, i)     { LIST; printf("<int:%s>\n", i); }
-#define tokenReal(t, i)       { LIST; printf("<real:%s>\n", i); }
-#define tokenString(t, s)      { LIST; token_dump_string(s); }
-#define tokenIdentifier(t, id) { LIST; printf("<id:%s>\n", id); symtab_insert(id, symtab); }
+#define DETAIL_LOG 1
 
-#define dumpline { printf(" | %4d: %s", linenum++, buf); buf[0] = '\0'; }
+#if DETAIL_LOG == 1
+#define PRINTF(FMT, ...) printf(FMT, __VA_ARGS__)
+#else
+#define PRINTF(FMT, ...)
+#endif
+
+#define LIST                   { strcat(buf, yytext); colnum += strlen(yytext); }
+#define token(t)               { LIST; if(DETAIL_LOG) token_pretty_print(t, (#t)); return t; }
+#define tokenInteger(t, i)     { LIST; PRINTF("<int:%s>\n", i); yylval.integer = atoi(i); return t; }
+#define tokenReal(t, i)        { LIST; PRINTF("<real:%s>\n", i); sscanf(i, "%lf", &yylval.real); return t; }
+#define tokenString(t, s)      { LIST; if(DETAIL_LOG) token_dump_string(s); yylval.string = s; return t; }
+#define tokenIdentifier(t, id) { LIST; PRINTF("<id:%s>\n", id); symtab_insert(id, symtab, &yylval.symbol); return t; }
+
+#define dumpline { PRINTF(" | %4d: %s", linenum, buf); linenum++; colnum = 0; buf[0] = '\0'; }
 
 #define MAX_LINE_LENG 65536
 
