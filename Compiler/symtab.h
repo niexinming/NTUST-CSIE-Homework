@@ -1,3 +1,6 @@
+#ifndef SYMTAB_H
+#define SYMTAB_H
+
 #define SYMTAB_HASH_SIZE 4096
 
 typedef struct SYMTAB_ENTRY_s {
@@ -16,3 +19,5 @@ void    symtab_destroy(SYMTAB *);
 int     symtab_insert(const char *, SYMTAB *);
 int     symtab_lookup(const char *, SYMTAB *);
 void    symtab_dump(SYMTAB *);
+
+#endif

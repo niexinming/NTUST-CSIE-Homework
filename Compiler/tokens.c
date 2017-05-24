@@ -1,49 +1,48 @@
 #include <stdio.h>
 #include "tokens.h"
 
-const char * token_get_symbols(enum TOKENS token)
+const char * token_get_symbols(enum yytokentype token)
 {
 	switch(token) {
-		case TOKEN_COMMA: return ",";
-		case TOKEN_COLON: return ":";
-		case TOKEN_SEMICOLON: return ";";
-		case TOKEN_LEFT_PARENTHESIS: return "(";
-		case TOKEN_RIGHT_PARENTHESIS: return ")";
-		case TOKEN_LEFT_BRACKET: return "[";
-		case TOKEN_RIGHT_BRACKET: return "]";
-		case TOKEN_LEFT_BRACE: return "{";
-		case TOKEN_RIGHT_BRACE: return "}";
-		case TOKEN_LOGICAL_NOT: return "!";
-		case TOKEN_BITWISE_NOT: return "~";
-		case TOKEN_ADD: return "+";
-		case TOKEN_SUB: return "-";
-		case TOKEN_MUL: return "*";
-		case TOKEN_DIV: return "/";
-		case TOKEN_MOD: return "%";
-		case TOKEN_XOR: return "^";
-		case TOKEN_BITWISE_AND: return "&";
-		case TOKEN_BITWISE_OR: return "|";
-		case TOKEN_LOGICAL_AND: return "&&";
-		case TOKEN_LOGICAL_OR: return "||";
-		case TOKEN_LT: return "<";
-		case TOKEN_GT: return ">";
-		case TOKEN_LTE: return "<=";
-		case TOKEN_GTE: return ">=";
-		case TOKEN_EQ: return "==";
-		case TOKEN_NEQ: return "!=";
-		case TOKEN_ASSIGN: return "=";
-		case TOKEN_ASSIGN_ADD: return "+=";
-		case TOKEN_ASSIGN_SUB: return "-=";
-		case TOKEN_ASSIGN_MUL: return "*=";
-		case TOKEN_ASSIGN_DIV: return "/=";
-		case TOKEN_ASSIGN_MOD: return "%=";
-		case TOKEN_ASSIGN_XOR: return "^=";
+		case COMMA: return ",";
+		case COLON: return ":";
+		case SEMICOLON: return ";";
+		case LEFT_PARENTHESIS: return "(";
+		case RIGHT_PARENTHESIS: return ")";
+		case LEFT_BRACKET: return "[";
+		case RIGHT_BRACKET: return "]";
+		case LEFT_BRACE: return "{";
+		case RIGHT_BRACE: return "}";
+		case LOGICAL_NOT: return "!";
+		case BITWISE_NOT: return "~";
+		case ADD: return "+";
+		case SUB: return "-";
+		case MUL: return "*";
+		case DIV: return "/";
+		case MOD: return "%";
+		case XOR: return "^";
+		case BITWISE_AND: return "&";
+		case BITWISE_OR: return "|";
+		case LOGICAL_AND: return "&&";
+		case LOGICAL_OR: return "||";
+		case LT: return "<";
+		case GT: return ">";
+		case LTE: return "<=";
+		case GTE: return ">=";
+		case EQ: return "==";
+		case NEQ: return "!=";
+		case ASSIGN: return "=";
+		case ASSIGN_ADD: return "+=";
+		case ASSIGN_SUB: return "-=";
+		case ASSIGN_MUL: return "*=";
+		case ASSIGN_DIV: return "/=";
+		case ASSIGN_MOD: return "%=";
+		case ASSIGN_XOR: return "^=";
+		default: return NULL;
 	}
-
-	return NULL;
 }
 
-void token_pretty_print(enum TOKENS token, const char *default_)
+void token_pretty_print(enum yytokentype token, const char *default_)
 {
 	const char *symbols = token_get_symbols(token);
 	if(symbols) {

@@ -1,5 +1,5 @@
 %{
-#define LIST            strcat(buf, yytext)
+#define LIST                   { strcat(buf, yytext); colnum += strlen(yytext); }
 #define token(t)               { LIST; token_pretty_print(t, (#t)+6); }
 #define tokenInteger(t, i)     { LIST; printf("<int:%s>\n", i); }
 #define tokenFloat(t, i)       { LIST; printf("<float:%s>\n", i); }
@@ -13,6 +13,7 @@
 #include "tokens.h"
 #include "symtab.h"
 
+int colnum = 1;
 int linenum = 1;
 char buf[MAX_LINE_LENG];
 char string_buffer[MAX_LINE_LENG];
@@ -29,95 +30,95 @@ identifier	[a-zA-Z_][a-zA-Z0-9_]*
 
  /** delimiters **/
 
-<INITIAL>","		{ token(TOKEN_COMMA); }
-<INITIAL>":"		{ token(TOKEN_COLON); }
-<INITIAL>";"		{ token(TOKEN_SEMICOLON); }
+<INITIAL>","		{ token(COMMA); }
+<INITIAL>":"		{ token(COLON); }
+<INITIAL>";"		{ token(SEMICOLON); }
 
-<INITIAL>"("		{ token(TOKEN_LEFT_PARENTHESIS); }
-<INITIAL>")"		{ token(TOKEN_RIGHT_PARENTHESIS); }
+<INITIAL>"("		{ token(LEFT_PARENTHESIS); }
+<INITIAL>")"		{ token(RIGHT_PARENTHESIS); }
 
-<INITIAL>"["		{ token(TOKEN_LEFT_BRACKET); }
-<INITIAL>"]"		{ token(TOKEN_RIGHT_BRACKET); }
+<INITIAL>"["		{ token(LEFT_BRACKET); }
+<INITIAL>"]"		{ token(RIGHT_BRACKET); }
 
-<INITIAL>"{"		{ token(TOKEN_LEFT_BRACE); }
-<INITIAL>"}"		{ token(TOKEN_RIGHT_BRACE); }
+<INITIAL>"{"		{ token(LEFT_BRACE); }
+<INITIAL>"}"		{ token(RIGHT_BRACE); }
 
 
  /** unary operator **/
 
-<INITIAL>"!"		{ token(TOKEN_LOGICAL_NOT); }
-<INITIAL>"~"		{ token(TOKEN_BITWISE_NOT); }
+<INITIAL>"!"		{ token(LOGICAL_NOT); }
+<INITIAL>"~"		{ token(BITWISE_NOT); }
 
 
  /** binary operator **/
 
-<INITIAL>"+"		{ token(TOKEN_ADD); }
-<INITIAL>"-"		{ token(TOKEN_SUB); }
-<INITIAL>"*"		{ token(TOKEN_MUL); }
-<INITIAL>"/"		{ token(TOKEN_DIV); }
-<INITIAL>"%"		{ token(TOKEN_MOD); }
-<INITIAL>"^"		{ token(TOKEN_XOR); }
-<INITIAL>"&"		{ token(TOKEN_BITWISE_AND); }
-<INITIAL>"|"		{ token(TOKEN_BITWISE_OR); }
-<INITIAL>"&&"		{ token(TOKEN_LOGICAL_AND); }
-<INITIAL>"||"		{ token(TOKEN_LOGICAL_OR); }
+<INITIAL>"+"		{ token(ADD); }
+<INITIAL>"-"		{ token(SUB); }
+<INITIAL>"*"		{ token(MUL); }
+<INITIAL>"/"		{ token(DIV); }
+<INITIAL>"%"		{ token(MOD); }
+<INITIAL>"^"		{ token(XOR); }
+<INITIAL>"&"		{ token(BITWISE_AND); }
+<INITIAL>"|"		{ token(BITWISE_OR); }
+<INITIAL>"&&"		{ token(LOGICAL_AND); }
+<INITIAL>"||"		{ token(LOGICAL_OR); }
 
 
  /** compare **/
 
-<INITIAL>"<"		{ token(TOKEN_LT); }
-<INITIAL>">"		{ token(TOKEN_GT); }
-<INITIAL>"<="		{ token(TOKEN_LTE); }
-<INITIAL>">="		{ token(TOKEN_GTE); }
-<INITIAL>"=="		{ token(TOKEN_EQ); }
-<INITIAL>"!="		{ token(TOKEN_NEQ); }
+<INITIAL>"<"		{ token(LT); }
+<INITIAL>">"		{ token(GT); }
+<INITIAL>"<="		{ token(LTE); }
+<INITIAL>">="		{ token(GTE); }
+<INITIAL>"=="		{ token(EQ); }
+<INITIAL>"!="		{ token(NEQ); }
 
 
  /** assignment **/
 
-<INITIAL>"="		{ token(TOKEN_ASSIGN); }
-<INITIAL>"+="		{ token(TOKEN_ASSIGN_ADD); }
-<INITIAL>"-="		{ token(TOKEN_ASSIGN_SUB); }
-<INITIAL>"*="		{ token(TOKEN_ASSIGN_MUL); }
-<INITIAL>"/="		{ token(TOKEN_ASSIGN_DIV); }
-<INITIAL>"%="		{ token(TOKEN_ASSIGN_MOD); }
-<INITIAL>"^="		{ token(TOKEN_ASSIGN_XOR); }
+<INITIAL>"="		{ token(ASSIGN); }
+<INITIAL>"+="		{ token(ASSIGN_ADD); }
+<INITIAL>"-="		{ token(ASSIGN_SUB); }
+<INITIAL>"*="		{ token(ASSIGN_MUL); }
+<INITIAL>"/="		{ token(ASSIGN_DIV); }
+<INITIAL>"%="		{ token(ASSIGN_MOD); }
+<INITIAL>"^="		{ token(ASSIGN_XOR); }
 
 
  /** keywords **/
 
-<INITIAL>"bool"		{ token(TOKEN_BOOL); }
-<INITIAL>"break"	{ token(TOKEN_BREAK); }
-<INITIAL>"case"		{ token(TOKEN_CASE); }
-<INITIAL>"const"	{ token(TOKEN_CONST); }
-<INITIAL>"continue"	{ token(TOKEN_CONTINUE); }
-<INITIAL>"default"	{ token(TOKEN_DEFAULT); }
-<INITIAL>"else"		{ token(TOKEN_ELSE); }
-<INITIAL>"false"	{ token(TOKEN_FALSE); }
-<INITIAL>"for"		{ token(TOKEN_FOR); }
-<INITIAL>"func"		{ token(TOKEN_FUNC); }
-<INITIAL>"go"		{ token(TOKEN_GO); }
-<INITIAL>"if"		{ token(TOKEN_IF); }
-<INITIAL>"import"	{ token(TOKEN_IMPORT); }
-<INITIAL>"int"		{ token(TOKEN_INT); }
-<INITIAL>"nil"		{ token(TOKEN_NIL); }
-<INITIAL>"print"	{ token(TOKEN_PRINT); }
-<INITIAL>"println"	{ token(TOKEN_PRINTLN); }
-<INITIAL>"real"		{ token(TOKEN_REAL); }
-<INITIAL>"return"	{ token(TOKEN_RETURN); }
-<INITIAL>"string"	{ token(TOKEN_STRING); }
-<INITIAL>"struct"	{ token(TOKEN_STRUCT); }
-<INITIAL>"switch"	{ token(TOKEN_SWITCH); }
-<INITIAL>"true"		{ token(TOKEN_TRUE); }
-<INITIAL>"type"		{ token(TOKEN_TYPE); }
-<INITIAL>"var"		{ token(TOKEN_VAR); }
-<INITIAL>"void"		{ token(TOKEN_VOID); }
-<INITIAL>"while"	{ token(TOKEN_WHILE); }
+<INITIAL>"bool"		{ token(BOOL); }
+<INITIAL>"break"	{ token(BREAK); }
+<INITIAL>"case"		{ token(CASE); }
+<INITIAL>"const"	{ token(CONST); }
+<INITIAL>"continue"	{ token(CONTINUE); }
+<INITIAL>"default"	{ token(DEFAULT); }
+<INITIAL>"else"		{ token(ELSE); }
+<INITIAL>"false"	{ token(FALSE); }
+<INITIAL>"for"		{ token(FOR); }
+<INITIAL>"func"		{ token(FUNC); }
+<INITIAL>"go"		{ token(GO); }
+<INITIAL>"if"		{ token(IF); }
+<INITIAL>"import"	{ token(IMPORT); }
+<INITIAL>"int"		{ token(INT); }
+<INITIAL>"nil"		{ token(NIL); }
+<INITIAL>"print"	{ token(PRINT); }
+<INITIAL>"println"	{ token(PRINTLN); }
+<INITIAL>"real"		{ token(REAL); }
+<INITIAL>"return"	{ token(RETURN); }
+<INITIAL>"string"	{ token(STRING); }
+<INITIAL>"struct"	{ token(STRUCT); }
+<INITIAL>"switch"	{ token(SWITCH); }
+<INITIAL>"true"		{ token(TRUE); }
+<INITIAL>"type"		{ token(TYPE); }
+<INITIAL>"var"		{ token(VAR); }
+<INITIAL>"void"		{ token(VOID); }
+<INITIAL>"while"	{ token(WHILE); }
 
 
  /** identifier **/
 
-<INITIAL>{identifier}	{ tokenIdentifier(TOKEN_ID, yytext); }
+<INITIAL>{identifier}	{ tokenIdentifier(ID, yytext); }
 
 
  /** single line comment **/
@@ -138,7 +139,7 @@ identifier	[a-zA-Z_][a-zA-Z0-9_]*
 
 <INITIAL>\"          { LIST; BEGIN IN_STRING; string_buffer[0] = 0; }
 <IN_STRING>[^\"\\]   { LIST; strcat(string_buffer, yytext); }
-<IN_STRING>\"        { tokenString(TOKEN_CONST_STRING, string_buffer); BEGIN INITIAL; }
+<IN_STRING>\"        { tokenString(CONST_STRING, string_buffer); BEGIN INITIAL; }
 
 <IN_STRING>"\\"      { LIST; BEGIN IN_STRING_ESCAPED; }
 <IN_STRING_ESCAPED>n { LIST; strcat(string_buffer, "\n"); BEGIN IN_STRING; }
@@ -149,16 +150,16 @@ identifier	[a-zA-Z_][a-zA-Z0-9_]*
 
  /** integer constant **/
 
-<INITIAL>[+-]?[0-9]+ { tokenInteger(TOKEN_CONST_INT, yytext); }
+<INITIAL>[+-]?[0-9]+ { tokenInteger(CONST_INT, yytext); }
 
  /** real number floating point constant **/
 
-<INITIAL>[+-]?[0-9]*\.?[0-9]*(e-?[0-9]+)? { tokenFloat(TOKEN_CONST_FLOAT, yytext); }
+<INITIAL>[+-]?[0-9]*\.?[0-9]*(e-?[0-9]+)? { tokenFloat(CONST_FLOAT, yytext); }
 
 
  /** newline **/
 
-\n      { LIST; dumpline; }
+\n      { LIST; dumpline; colnum = 1; }
 
 
  /** spaces **/
@@ -180,7 +181,7 @@ int main()
 {
 	symtab = symtab_create();
 
-	yylex();
+	yyparse();
 
 	printf("\n"
 			"  =======================\n"
