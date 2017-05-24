@@ -61,6 +61,8 @@ void token_dump_string(const char *s)
 			printf("\\r");
 		} else if (*s == '\n') {
 			printf("\\n");
+		} else if (*s == '\"') {
+			printf("\\\"");
 		} else if (0x20 <= *s && *s <= 0x7e) {
 			putchar(*s);
 		} else {

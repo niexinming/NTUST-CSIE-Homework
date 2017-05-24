@@ -138,13 +138,13 @@ identifier	[a-zA-Z_][a-zA-Z0-9_]*
  /** string literal **/
 
 <INITIAL>\"          { LIST; BEGIN IN_STRING; string_buffer[0] = 0; }
-<IN_STRING>[^\"\\]   { LIST; strcat(string_buffer, yytext); }
-<IN_STRING>\"        { tokenString(CONST_STRING, string_buffer); BEGIN INITIAL; }
+<IN_STRING>[^\\"]    { LIST; strcat(string_buffer, yytext); }
+<IN_STRING>\"        { BEGIN INITIAL; tokenString(CONST_STRING, string_buffer); }
 
 <IN_STRING>"\\"      { LIST; BEGIN IN_STRING_ESCAPED; }
-<IN_STRING_ESCAPED>n { LIST; strcat(string_buffer, "\n"); BEGIN IN_STRING; }
-<IN_STRING_ESCAPED>r { LIST; strcat(string_buffer, "\r"); BEGIN IN_STRING; }
-<IN_STRING_ESCAPED>0 { LIST; strcat(string_buffer, "\0"); BEGIN IN_STRING; }
+<IN_STRING_ESCAPED>n { LIST; BEGIN IN_STRING; strcat(string_buffer, "\n"); }
+<IN_STRING_ESCAPED>r { LIST; BEGIN IN_STRING; strcat(string_buffer, "\r"); }
+<IN_STRING_ESCAPED>0 { LIST; BEGIN IN_STRING; strcat(string_buffer, "\0"); }
 <IN_STRING>\"\"      { LIST; strcat(string_buffer, "\""); }
 
 
