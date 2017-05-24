@@ -2,7 +2,7 @@
 #define LIST                   { strcat(buf, yytext); colnum += strlen(yytext); }
 #define token(t)               { LIST; token_pretty_print(t, (#t)+6); }
 #define tokenInteger(t, i)     { LIST; printf("<int:%s>\n", i); }
-#define tokenFloat(t, i)       { LIST; printf("<float:%s>\n", i); }
+#define tokenReal(t, i)       { LIST; printf("<real:%s>\n", i); }
 #define tokenString(t, s)      { LIST; token_dump_string(s); }
 #define tokenIdentifier(t, id) { LIST; printf("<id:%s>\n", id); symtab_insert(id, symtab); }
 
@@ -154,7 +154,7 @@ identifier	[a-zA-Z_][a-zA-Z0-9_]*
 
  /** real number floating point constant **/
 
-<INITIAL>[+-]?[0-9]*\.?[0-9]*(e-?[0-9]+)? { tokenFloat(CONST_FLOAT, yytext); }
+<INITIAL>[+-]?[0-9]*\.?[0-9]*(e-?[0-9]+)? { tokenReal(CONST_REAL, yytext); }
 
 
  /** newline **/
