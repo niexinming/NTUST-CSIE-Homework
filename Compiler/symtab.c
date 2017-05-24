@@ -74,6 +74,7 @@ int symtab_lookup(const char * s, SYMTAB *symtab, SYMTAB_ENTRY **out_entry)
 			}
 			return entry->id;
 		}
+		entry = entry->next;
 	}
 	return 0;
 }
