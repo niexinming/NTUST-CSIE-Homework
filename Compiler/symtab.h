@@ -16,8 +16,8 @@ typedef struct SYMTAB_s {
 
 SYMTAB* symtab_create();
 void    symtab_destroy(SYMTAB *);
-int     symtab_insert(const char *, SYMTAB *);
-int     symtab_lookup(const char *, SYMTAB *);
+int     symtab_insert(const char *, SYMTAB *, SYMTAB_ENTRY **);
+int     symtab_lookup(const char *, SYMTAB *, SYMTAB_ENTRY **);
 void    symtab_dump(SYMTAB *);
 
 #endif

@@ -37,9 +37,9 @@ uint64_t symtab_hash_symbol(const char *s)
 	return h % SYMTAB_HASH_SIZE;
 }
 
-int symtab_insert(const char * s, SYMTAB *symtab)
+int symtab_insert(const char * s, SYMTAB *symtab, SYMTAB_ENTRY **out_entry)
 {
-	int id = symtab_lookup(s, symtab);
+	int id = symtab_lookup(s, symtab, out_entry);
 	if(id) return id;
 
 	size_t len = strlen(s);
@@ -56,15 +56,22 @@ int symtab_insert(const char * s, SYMTAB *symtab)
 
 	symtab->entries[hash] = entry;
 
+	if(out_entry) {
+		*out_entry = entry;
+	}
+
 	return id;
 }
 
-int symtab_lookup(const char * s, SYMTAB *symtab)
+int symtab_lookup(const char * s, SYMTAB *symtab, SYMTAB_ENTRY **out_entry)
 {
 	uint64_t slot = symtab_hash_symbol(s);
 	SYMTAB_ENTRY *entry = symtab->entries[slot];
 	while(entry) {
 		if(strcmp(s, entry->name) == 0) {
+			if(out_entry) {
+				*out_entry = entry;
+			}
 			return entry->id;
 		}
 	}
