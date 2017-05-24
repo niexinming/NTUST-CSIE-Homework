@@ -97,5 +97,5 @@ typedef struct AST_s {
 	};
 } AST_NODE;
 
-AST_VALUE* ast_new_value(int);
-AST_VAR* ast_new_var(int, int, unsigned int, SYMTAB_ENTRY *, struct AST_VALUE_s *);
+AST_VALUE* ast_create_value(int);
+AST_VAR* ast_create_var(int, int, unsigned int, SYMTAB_ENTRY *, struct AST_VALUE_s *);

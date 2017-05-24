@@ -89,25 +89,25 @@ type : LEFT_BRACKET CONST_INT RIGHT_BRACKET basic_type { $$.t = $4; $$.n = $2; }
      | VOID { $$.n = 0; $$.t = VOID; }
      ;
 
-const_value : CONST_INT    { $$ = ast_new_value(INT);     $$->integer = $1; }
-            | CONST_REAL   { $$ = ast_new_value(REAL);    $$->real = $1; }
-            | CONST_STRING { $$ = ast_new_value(STRING);  $$->string = strdup($1); }
-            | TRUE         { $$ = ast_new_value(BOOL);    $$->integer = 1; }
-            | FALSE        { $$ = ast_new_value(BOOL);    $$->integer = 0; }
+const_value : CONST_INT    { $$ = ast_create_value(INT);     $$->integer = $1; }
+            | CONST_REAL   { $$ = ast_create_value(REAL);    $$->real = $1; }
+            | CONST_STRING { $$ = ast_create_value(STRING);  $$->string = strdup($1); }
+            | TRUE         { $$ = ast_create_value(BOOL);    $$->integer = 1; }
+            | FALSE        { $$ = ast_create_value(BOOL);    $$->integer = 0; }
             ;
 
 /* variables */
 var_decl : VAR id type {
-             $$ = ast_new_var($3.t, VAR, $3.n, $2, NULL);
+             $$ = ast_create_var($3.t, VAR, $3.n, $2, NULL);
          }
          | VAR id type ASSIGN const_value
          {
-             $$ = ast_new_var($3.t, VAR, $3.n, $2, $5);
+             $$ = ast_create_var($3.t, VAR, $3.n, $2, $5);
          }
          ;
 
-const_decl : CONST id type ASSIGN const_value { $$ = ast_new_var($3.t, CONST, $3.n, $2, $5); }
-           | CONST id ASSIGN const_value      { $$ = ast_new_var($4->type, CONST, 0, $2, $4); }
+const_decl : CONST id type ASSIGN const_value { $$ = ast_create_var($3.t, CONST, $3.n, $2, $5); }
+           | CONST id ASSIGN const_value      { $$ = ast_create_var($4->type, CONST, 0, $2, $4); }
            ;
 
 /* expressions */

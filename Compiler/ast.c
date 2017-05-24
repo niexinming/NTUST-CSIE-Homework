@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include "ast.h"
 
-AST_VALUE* ast_new_value(int type)
+AST_VALUE* ast_create_value(int type)
 {
     AST_VALUE *val = malloc(sizeof(AST_VALUE));
     val->type = type;
@@ -39,7 +39,7 @@ void ast_dump_var(AST_VAR* var)
     printf(")>\n");
 }
 
-AST_VAR* ast_new_var(int type, int is_const, unsigned int array_size, SYMTAB_ENTRY *symbol, struct AST_VALUE_s * val)
+AST_VAR* ast_create_var(int type, int is_const, unsigned int array_size, SYMTAB_ENTRY *symbol, struct AST_VALUE_s * val)
 {
     AST_VAR *var = malloc(sizeof(AST_VAR));
     var->type = type;
