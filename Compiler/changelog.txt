@@ -1,0 +1,10 @@
+Proj2
+
+- Remove TOKEN_ prefix, use yacc generated define
+- Move symbol table related operations to yacc file
+- Fix string scanner (Won't go back to INITIAL state)
+- Fix infinity loop in symtab_lookup
+- Calculate column number
+- Move main function to yacc
+- Update Makefile
+- Add return statement to pass TOKEN to yacc
