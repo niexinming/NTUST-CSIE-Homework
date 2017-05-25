@@ -1,3 +1,6 @@
+#ifndef AST_H
+#define AST_H
+
 #include "symtab.h"
 #include "parser.h"
 
@@ -7,6 +10,9 @@ enum AST_TYPE {
 
 	// const define
 	CONST_DECL,
+
+	// variable or argument reference
+	VAR_REF,
 
 	// variable or function arguments
 	VAR_DECL,
@@ -45,11 +51,11 @@ typedef struct AST_VALUE_s {
 
 // variable or paramteter or const
 typedef struct AST_VAR_s {
-	int                type;
-	int                is_const;
-	unsigned int       array_size; // zero for non-array variable
-	SYMTAB_ENTRY       *symbol;
-	struct AST_VALUE_s *val;
+	int                 data_type;
+	int                 is_const;
+	unsigned int        array_size; // zero for non-array variable
+	SYMTAB_ENTRY        *symbol;
+	struct AST_VALUE_s  *val;
 } AST_VAR;
 
 // expression
@@ -89,13 +95,17 @@ typedef struct AST_NODE_s {
 	struct AST_NODE_s       *next;
 	enum AST_TYPE           type;
 	union {
-		struct AST_VALUE_s  value;
-		struct AST_VAR_s    var;
-		struct AST_FUNC_s   func;
-		struct AST_INVOKE_s invoke;
-		struct AST_ASSIGN_s assignment;
+		void                *ptr;
+		struct AST_VALUE_s  *value;
+		struct AST_VAR_s    *var;
+		struct AST_FUNC_s   *func;
+		struct AST_INVOKE_s *invoke;
+		struct AST_ASSIGN_s *assignment;
 	};
 } AST_NODE;
 
 AST_VALUE* ast_create_value(int);
-AST_VAR* ast_create_var(int, int, unsigned int, SYMTAB_ENTRY *, struct AST_VALUE_s *);
+AST_VAR* ast_create_var(int, int, unsigned int, struct SYMTAB_ENTRY_s *, struct AST_VALUE_s *);
+AST_NODE* ast_create_node(enum AST_TYPE, void *);
+
+#endif

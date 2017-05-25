@@ -1,5 +1,5 @@
 %{
-#define DETAIL_LOG 1
+#define DETAIL_LOG 0
 
 #if DETAIL_LOG == 1
 #define PRINTF(FMT, ...) printf(FMT, __VA_ARGS__)
@@ -10,23 +10,20 @@
 #define LIST                   { strcat(buf, yytext); colnum += strlen(yytext); }
 #define token(t)               { LIST; if(DETAIL_LOG) token_pretty_print(t, (#t)); return t; }
 #define tokenInteger(t, i)     { LIST; PRINTF("<int:%s>\n", i); yylval.integer = atoi(i); return t; }
-#define tokenReal(t, i)        { LIST; PRINTF("<real:%s>\n", i); sscanf(i, "%lf", &yylval.real); return t; }
+#define tokenReal(t, i)        { LIST; sscanf(i, "%lf", &yylval.real); PRINTF("<real:%g>\n", yylval.real); return t; }
 #define tokenString(t, s)      { LIST; if(DETAIL_LOG) token_dump_string(s); yylval.string = s; return t; }
-#define tokenIdentifier(t, id) { LIST; PRINTF("<id:%s>\n", id); symtab_insert(id, symtab, &yylval.symbol); return t; }
+#define tokenIdentifier(t, id) { LIST; PRINTF("<id:%s>\n", id); yylval.string = strdup(id); return t; }
 
-#define dumpline { PRINTF(" | %4d: %s", linenum, buf); linenum++; colnum = 0; buf[0] = '\0'; }
+#define dumpline { printf(" | %4d: %s", linenum, buf); linenum++; colnum = 0; buf[0] = '\0'; }
 
 #define MAX_LINE_LENG 65536
 
 #include "tokens.h"
-#include "symtab.h"
 
 int colnum = 1;
 int linenum = 1;
 char buf[MAX_LINE_LENG];
 char string_buffer[MAX_LINE_LENG];
-
-SYMTAB *symtab;
 %}
 
 %s SINGLE_LINE_COMMENT MULTI_LINE_COMMENTS IN_STRING IN_STRING_ESCAPED
@@ -181,22 +178,4 @@ identifier	[a-zA-Z_][a-zA-Z0-9_]*
 	printf("%d:%s\n", linenum+1, buf);
 	printf("bad character:'%s'\n",yytext);
 	exit(-1);
-}
-
-%%
-
-int main()
-{
-	symtab = symtab_create();
-
-	yyparse();
-
-	printf("\n"
-			"  =======================\n"
-			"  == symbol table dump ==\n"
-			"  =======================\n"
-			"\n");
-
-	symtab_dump(symtab);
-	symtab_destroy(symtab);
 }

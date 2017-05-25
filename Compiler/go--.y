@@ -6,9 +6,22 @@
 #include "ast.h"
 #include "scanner.c"
 
+int has_error = 0;
+char err_msg_buf[1024];
 void yyerror(const char *errmsg);
 
 #define trace(...) printf("TRACE: "); printf(__VA_ARGS__); putchar(0x0a)
+
+SYMTAB *symtab, *root_symtab;
+
+void begin_context() {
+    symtab = symtab_create(symtab);
+}
+
+void end_context() {
+    symtab_dump(symtab);
+    symtab = symtab_destroy(symtab);
+}
 
 %}
 
@@ -32,7 +45,7 @@ void yyerror(const char *errmsg);
 /* tokens definition */
 
 /* basic identifier and constants */
-%token <symbol>  ID
+%token <string>  ID
 %token <integer> CONST_INT
 %token <real>    CONST_REAL
 %token <string>  CONST_STRING
@@ -63,18 +76,41 @@ void yyerror(const char *errmsg);
 
 %type <symbol> id;
 %type <symbol> id_eval;
+
 %type <integer> basic_type;
 %type <data_type> type;
+
 %type <value> const_value;
+
 %type <var> var_decl;
 %type <var> const_decl;
+
+%type <ast_node> expr;
 
 %%
 
 /* atomic things */
-id : ID;
+id : ID {
+    if(symtab_lookup($1, symtab, 0, NULL)) {
+        sprintf(err_msg_buf, "duplicated symbol: %s", $1);
+        yyerror(err_msg_buf);
+    }
 
-id_eval : ID { $$ = $1; };
+    if(symtab_insert($1, NULL, symtab, &$$) == 0) {
+        yyerror("create symbol failed");
+    }
+
+    free($1);
+};
+
+id_eval : ID {
+    if(symtab_lookup($1, symtab, 1, &$$) == 0) {
+        sprintf(err_msg_buf, "can not find symbol: %s", $1);
+        yyerror(err_msg_buf);
+    }
+
+    free($1);
+};
 
 /* basic immutable data types */
 basic_type : STRING { $$ = STRING; }
@@ -111,42 +147,42 @@ const_decl : CONST id type ASSIGN const_value { $$ = ast_create_var($3.t, CONST,
            ;
 
 /* expressions */
-expr : LEFT_PARENTHESIS expr RIGHT_PARENTHESIS { trace("expr -> LEFT_PARENTHESIS expr RIGHT_PARENTHESIS"); }
-     | const_value                             { trace("expr -> const_value                            "); }
-     | id_eval                                 { trace("expr -> id_eval (%s)                           ", $1->name); }
-     | invoke_stmt                             { trace("expr -> invoke_stmt                            "); }
-     | expr LOGICAL_OR expr                    { trace("expr -> expr LOGICAL_OR expr                   "); }
-     | expr LOGICAL_AND expr                   { trace("expr -> expr LOGICAL_AND expr                  "); }
-     | expr LOGICAL_NOT expr                   { trace("expr -> expr LOGICAL_NOT expr                  "); }
-     | expr LT expr                            { trace("expr -> expr LT expr                           "); }
-     | expr GT expr                            { trace("expr -> expr GT expr                           "); }
-     | expr LTE expr                           { trace("expr -> expr LTE expr                          "); }
-     | expr GTE expr                           { trace("expr -> expr GTE expr                          "); }
-     | expr EQ expr                            { trace("expr -> expr EQ expr                           "); }
-     | expr NEQ expr                           { trace("expr -> expr NEQ expr                          "); }
-     | expr ADD expr                           { trace("expr -> expr ADD expr                          "); }
-     | expr SUB expr                           { trace("expr -> expr SUB expr                          "); }
-     | expr BITWISE_OR expr                    { trace("expr -> expr BITWISE_OR expr                   "); }
-     | expr BITWISE_AND expr                   { trace("expr -> expr BITWISE_AND expr                  "); }
-     | expr XOR expr                           { trace("expr -> expr XOR expr                          "); }
-     | expr MUL expr                           { trace("expr -> expr MUL expr                          "); }
-     | expr DIV expr                           { trace("expr -> expr DIV expr                          "); }
-     | expr MOD expr                           { trace("expr -> expr MOD expr                          "); }
-     | BITWISE_NOT expr                        { trace("expr -> BITWISE_NOT expr                       "); }
-     | LOGICAL_NOT expr                        { trace("expr -> LOGICAL_NOT expr                       "); }
-     | SUB expr                                { trace("expr -> SUB expr                               "); }
+expr : LEFT_PARENTHESIS expr RIGHT_PARENTHESIS { $$ = $2; }
+     | const_value { $$ = ast_create_node(CONST_VAL, $1); }
+     | id_eval { $$ = ast_create_node(VAR_DECL, NULL); }
+     | invoke_stmt
+     | expr LOGICAL_OR expr
+     | expr LOGICAL_AND expr
+     | expr LOGICAL_NOT expr
+     | expr LT expr
+     | expr GT expr
+     | expr LTE expr
+     | expr GTE expr
+     | expr EQ expr
+     | expr NEQ expr
+     | expr ADD expr
+     | expr SUB expr
+     | expr BITWISE_OR expr
+     | expr BITWISE_AND expr
+     | expr XOR expr
+     | expr MUL expr
+     | expr DIV expr
+     | expr MOD expr
+     | BITWISE_NOT expr
+     | LOGICAL_NOT expr
+     | SUB expr
      ;
 
 
 
 /* basic stmt */
-assign : id ASSIGN     expr { trace("assign value to var %s", $1->name); }
-       | id ASSIGN_ADD expr
-       | id ASSIGN_SUB expr
-       | id ASSIGN_MUL expr
-       | id ASSIGN_DIV expr
-       | id ASSIGN_MOD expr
-       | id ASSIGN_XOR expr
+assign : id_eval ASSIGN     expr { trace("assign value to var %s", $1->name); }
+       | id_eval ASSIGN_ADD expr
+       | id_eval ASSIGN_SUB expr
+       | id_eval ASSIGN_MUL expr
+       | id_eval ASSIGN_DIV expr
+       | id_eval ASSIGN_MOD expr
+       | id_eval ASSIGN_XOR expr
        ;
 
 return_stmt : RETURN
@@ -157,7 +193,7 @@ invoke_args : expr
             |
             ;
 
-invoke_stmt : id LEFT_PARENTHESIS invoke_args RIGHT_PARENTHESIS { trace("Invoke function : %s", $1->name); };
+invoke_stmt : id_eval LEFT_PARENTHESIS invoke_args RIGHT_PARENTHESIS { trace("Invoke function : %s", $1->name); };
 
 stmt_set : assign { trace("assign in stmt"); }
          | var_decl { trace("var_decl in stmt"); }
@@ -176,7 +212,11 @@ stmts : stmt
       ;
 
 /* { ... code ... } */
-block : LEFT_BRACE stmts RIGHT_BRACE;
+begin_block : LEFT_BRACE { begin_context(); trace("begin of block"); };
+
+end_block : RIGHT_BRACE { end_context(); trace("end of block"); };
+
+block : begin_block stmts end_block;
 
 /* special stmt */
 print_stmt : PRINT expr
@@ -194,11 +234,17 @@ if_stmt : IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS
 
 if_body : block | stmt;
 
-for_init_stmt : stmt_set;
+for_init_stmt : stmt_set
+              |
+              ;
 
-for_cond : expr;
+for_cond : expr
+         |
+         ;
 
-for_inc : stmt_set;
+for_inc : stmt_set
+        |
+        ;
 
 for_body : block | stmt;
 
@@ -211,6 +257,9 @@ for_stmt : FOR LEFT_PARENTHESIS
                for_cond SEMICOLON
                for_inc
            RIGHT_PARENTHESIS for_body
+         | FOR LEFT_PARENTHESIS
+               for_cond
+           RIGHT_PARENTHESIS for_body
          ;
 
 /* functions */
@@ -222,9 +271,11 @@ func_args_def : func_args_list
               |
               ;
 
+begin_func : LEFT_PARENTHESIS { begin_context(); trace("begin of func"); };
+
 func_decl :
-    FUNC type id LEFT_PARENTHESIS func_args_def RIGHT_PARENTHESIS
-    block
+    FUNC type id begin_func func_args_def RIGHT_PARENTHESIS
+    block { end_context(); trace("end of func"); }
     ;
 
 /* merge them into program */
@@ -238,7 +289,26 @@ program : var_decl program
 %%
 void yyerror(const char *errmsg)
 {
-    printf("[-] (%d, %d): %s\n", linenum, colnum, errmsg);
+    has_error = 1;
+    printf("ERR (%d, %d): %s\n", linenum, colnum, errmsg);
 }
 
-/* vim: et */
+int main()
+{
+	symtab = root_symtab = symtab_create(NULL);
+
+	yyparse();
+
+	printf("\n"
+			"  =======================\n"
+			"  == symbol table dump ==\n"
+			"  =======================\n"
+			"\n");
+
+	symtab_dump(root_symtab);
+	symtab_destroy(root_symtab);
+}
+
+/*
+    vim: et
+*/

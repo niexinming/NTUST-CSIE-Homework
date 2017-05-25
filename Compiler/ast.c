@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "ast.h"
 
 AST_VALUE* ast_create_value(int type)
@@ -15,7 +16,7 @@ void ast_dump_var(AST_VAR* var)
     if(var->is_const == VAR) const_or_var = "VAR";
     const char *t = "UNKNOW";
 #define VAR_DUMP_CASE(C) case C: t = #C; break;
-    switch (var->type) {
+    switch (var->data_type) {
         VAR_DUMP_CASE(VOID);
         VAR_DUMP_CASE(INT);
         VAR_DUMP_CASE(REAL);
@@ -25,7 +26,7 @@ void ast_dump_var(AST_VAR* var)
     printf("<%s(Name=%s, Type=%s", const_or_var, var->symbol->name, t);
     if(var->val) {
         printf(", Value=");
-        switch (var->type) {
+        switch (var->data_type) {
             case VOID: printf("VOID"); break;
             case INT: printf("%d", var->val->integer); break;
             case REAL: printf("%lg", var->val->real); break;
@@ -42,11 +43,25 @@ void ast_dump_var(AST_VAR* var)
 AST_VAR* ast_create_var(int type, int is_const, unsigned int array_size, SYMTAB_ENTRY *symbol, struct AST_VALUE_s * val)
 {
     AST_VAR *var = malloc(sizeof(AST_VAR));
-    var->type = type;
+    var->data_type = type;
     var->is_const = is_const;
     var->array_size = array_size;
     var->symbol = symbol;
     var->val = val;
     ast_dump_var(var);
     return var;
+}
+
+AST_NODE* ast_create_node(enum AST_TYPE type, void *ptr)
+{
+	AST_NODE *ast_node = malloc(sizeof(AST_NODE));
+	ast_node->next = NULL;
+	ast_node->type = type;
+	ast_node->ptr = ptr;
+	return ast_node;
+}
+
+AST_NODE* ast_create_node_const(AST_VALUE *val)
+{
+	return ast_create_node(CONST_VAL, val);
 }
