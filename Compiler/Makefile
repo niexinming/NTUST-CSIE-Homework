@@ -4,7 +4,7 @@ all:
 	gcc -g parser.c symtab.c tokens.c ast.c -ll -ly -o parser
 	#gcc scanner.c symtab.c tokens.c -ll -o scanner
 	#./scanner < testcase/test.go
-	./parser < testcase/only_var.go
+	./parser < testcase/test.go
 
 clean:
 	@rm scanner parser parser.c parser.h

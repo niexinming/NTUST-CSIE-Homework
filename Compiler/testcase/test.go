@@ -1,19 +1,74 @@
-func void main() {
-	// array
-	arr = [ 55, 66, 77, true, false, 94.87, 1e6 ]
+/* Sigma.go
+ *
+ * Compute sum = 1 + 2 + ... + n
+ */
 
-	// complex expression
-	println((9487 - 2 ^ 5566 + 8) * 66 / 55 && 8787 | 8 % 3);
+// variables
+const n = 10
+var sum int = 0
+var index int
 
-	if (5 > 6 && 7 < 3 || 5>= 9 && 8 <= 5 || 1 == 1 && 1 != 0) {
-		println("WTF?!\n")
-	}
+func void test_func(sum int) {
+	println "sum conflict"
+}
 
-	// doing floating point parsing test
-	x = -9487.5
-	a += -999.6666e11
-	b += -999e11
-	c = 1e5
-	d ^= +9.9e-5
-	y = -1
+// main function
+func void sigma ( ) {
+  for (index = 0; index <= n; ) {
+    sum = sum + index
+    index = index + 1
+  }
+  print "The sum is "
+  println sum
+}
+
+
+
+/* fib.sc
+ *
+ * This test program computes the Nth Fibonacci number
+ */
+
+// variables
+const Fn = 1
+// var n int  = 8
+var FNminus1 int = 1
+
+// compute the nth Fibonacci number
+func void fib_main( ) {
+  for (n > 2; n = n - 1) {
+	var temp int
+    temp = Fn
+    Fn = Fn + FNminus1
+    FNminus1 = temp
+  }
+
+  /* print result */
+  print "Result of computation: "
+  println n
+}
+
+/*
+ * Example with Functions
+ */
+
+// variables
+var a int = 5
+
+// function declaration
+func int add(A int, b int) {
+  return A+b
+}
+
+// main function
+func void main( ) {
+	var c int
+  c = add(a, 10)
+  if (c > 10) {
+    print -c
+  }
+  else {
+    print c
+  }
+  println "Hello World"
 }
