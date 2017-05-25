@@ -33,6 +33,8 @@ enum AST_TYPE {
 	RETURN_STMT,
 	IF_STMT,
 	FOR_STMT,
+
+	EXPR_STMT,
 };
 
 enum EXPR_TYPE {
@@ -41,7 +43,7 @@ enum EXPR_TYPE {
 
 // value
 typedef struct AST_VALUE_s {
-	int            type; // VOID, INT, BOOL, STRING, REAL
+	int            data_type; // VOID, INT, BOOL, STRING, REAL
 	union {
 		const char *string;
 		int        integer;
@@ -56,39 +58,48 @@ typedef struct AST_VAR_s {
 	unsigned int        array_size; // zero for non-array variable
 	SYMTAB_ENTRY        *symbol;
 	struct AST_VALUE_s  *val;
+	struct AST_VAR_s    *next; // for param
 } AST_VAR;
 
 // expression
 typedef struct AST_EXPR_s {
-	enum EXPR_TYPE         type;
-	int                    oper;
+	enum EXPR_TYPE          type;
+	int                     data_type;
+	int                     oper;
 	union {
-		struct AST_VALUE_s *con;
-		struct AST_VAR_s   *var;
-		struct AST_EXPR_s  *lval;
+		void                *lptr;
+		struct AST_VALUE_s  *con;
+		struct AST_VAR_s    *var;
+		struct AST_EXPR_s   *lval;
+		struct AST_INVOKE_s *call;
 	};
-	struct AST_EXPR_s      *rval;
+	union {
+		void                *rptr;
+		struct AST_EXPR_s   *rval;
+	};
 } AST_EXPR;
 
 // function parameter
 typedef struct AST_FUNC_s {
-	struct SYMTAB_ENTRY_s *name;
+	struct SYMTAB_ENTRY_s *symbol;
+	int                   return_type;
 	unsigned int          param_count;
 	struct AST_VAR_s      *params;
-	struct AST_STMT_s     *stmts;
+	struct AST_NODE_s     *body;
 } AST_FUNC;
 
 // function call
 typedef struct AST_INVOKE_s {
-	struct SYMTAB_ENTRY_s *name;
+	struct SYMTAB_ENTRY_s *symbol;
 	unsigned int          arg_count;
 	struct AST_EXPR_s     *args;
 } AST_INVOKE;
 
 // assignment
 typedef struct AST_ASSIGN_s {
-	struct SYMTAB_ENTRY_s *lval;
-	struct AST_EXPR_s     *rval;
+	int               index;
+	struct AST_VAR_s  *lval;
+	struct AST_EXPR_s *rval;
 } AST_ASSIGN;
 
 typedef struct AST_NODE_s {
@@ -101,11 +112,19 @@ typedef struct AST_NODE_s {
 		struct AST_FUNC_s   *func;
 		struct AST_INVOKE_s *invoke;
 		struct AST_ASSIGN_s *assignment;
+		struct AST_EXPR_s   *expr;
 	};
 } AST_NODE;
 
+const char * ast_get_type_name(int);
 AST_VALUE* ast_create_value(int);
 AST_VAR* ast_create_var(int, int, unsigned int, struct SYMTAB_ENTRY_s *, struct AST_VALUE_s *);
 AST_NODE* ast_create_node(enum AST_TYPE, void *);
+AST_FUNC* ast_create_function(struct SYMTAB_ENTRY_s *symbol,
+		int return_type, struct AST_VAR_s *params,
+		struct AST_NODE_s *body);
+AST_NODE* ast_create_expr_node(enum EXPR_TYPE type, int data_type,
+		int oper, void *lptr, void *rptr);
+int ast_get_expr_type(AST_NODE *);
 
 #endif

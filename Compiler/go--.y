@@ -40,6 +40,8 @@ void end_context() {
     struct AST_NODE_s      *ast_node;
     struct { int t, n; }   data_type;
     struct AST_VAR_s       *var;
+    struct AST_INVOKE_s    *invoke;
+    struct AST_EXPR_s      *expr;
 }
 
 /* tokens definition */
@@ -60,6 +62,9 @@ void end_context() {
 %token ASSIGN ASSIGN_ADD ASSIGN_SUB ASSIGN_MUL ASSIGN_DIV ASSIGN_MOD ASSIGN_XOR
 */
 %token BREAK CASE CONST CONTINUE DEFAULT ELSE FALSE FOR FUNC GO IF IMPORT NIL PRINT PRINTLN RETURN STRUCT SWITCH TRUE TYPE VAR VOID WHILE
+
+/* hack for constant definition */
+%token ARG
 
 /* operator priority */
 
@@ -86,6 +91,14 @@ void end_context() {
 %type <var> const_decl;
 
 %type <ast_node> expr;
+
+%type <var> func_args_list;
+%type <var> func_args_def;
+%type <ast_node> func_decl;
+
+%type <ast_node> invoke_stmt;
+
+%type <ast_node> block;
 
 %%
 
@@ -135,21 +148,23 @@ const_value : CONST_INT    { $$ = ast_create_value(INT);     $$->integer = $1; }
 /* variables */
 var_decl : VAR id type {
              $$ = ast_create_var($3.t, VAR, $3.n, $2, NULL);
+             $2->meta = ast_create_node(VAR_DECL, $$);
          }
          | VAR id type ASSIGN const_value
          {
              $$ = ast_create_var($3.t, VAR, $3.n, $2, $5);
+             $2->meta = ast_create_node(VAR_DECL, $$);
          }
          ;
 
-const_decl : CONST id type ASSIGN const_value { $$ = ast_create_var($3.t, CONST, $3.n, $2, $5); }
-           | CONST id ASSIGN const_value      { $$ = ast_create_var($4->type, CONST, 0, $2, $4); }
+const_decl : CONST id type ASSIGN const_value { $$ = ast_create_var($3.t, CONST, $3.n, $2, $5); $2->meta = ast_create_node(CONST_DECL, $$); }
+           | CONST id ASSIGN const_value      { $$ = ast_create_var($4->data_type, CONST, 0, $2, $4); $2->meta = ast_create_node(CONST_DECL, $$);; }
            ;
 
 /* expressions */
 expr : LEFT_PARENTHESIS expr RIGHT_PARENTHESIS { $$ = $2; }
      | const_value { $$ = ast_create_node(CONST_VAL, $1); }
-     | id_eval { $$ = ast_create_node(VAR_DECL, NULL); }
+     | id_eval { $$ = ast_create_node(VAR_REF, $1); }
      | invoke_stmt
      | expr LOGICAL_OR expr
      | expr LOGICAL_AND expr
@@ -193,7 +208,13 @@ invoke_args : expr
             |
             ;
 
-invoke_stmt : id_eval LEFT_PARENTHESIS invoke_args RIGHT_PARENTHESIS { trace("Invoke function : %s", $1->name); };
+invoke_stmt : id_eval LEFT_PARENTHESIS invoke_args RIGHT_PARENTHESIS {
+                // TODO: create invoke stmt
+                AST_INVOKE *node = malloc(sizeof(AST_INVOKE));
+                node->symbol = $1;
+                $$ = ast_create_node(FUNC_CALL, node);
+                trace("Invoke function : %s", $1->name);
+            };
 
 stmt_set : assign { trace("assign in stmt"); }
          | var_decl { trace("var_decl in stmt"); }
@@ -264,18 +285,28 @@ for_stmt : FOR LEFT_PARENTHESIS
 
 /* functions */
 
-func_args_list : id type
-               | func_args_list COMMA id type;
+func_args_list : id type { $$ = ast_create_var($2.t, ARG, $2.n, $1, NULL);
+                           $1->meta = ast_create_node(VAR_DECL, $$); }
+               | id type COMMA func_args_list { $$ = ast_create_var($2.t, ARG, $2.n, $1, NULL);
+                                                $1->meta = ast_create_node(VAR_DECL, $$);
+                                                $$->next = $4; }
+               ;
 
-func_args_def : func_args_list
-              |
+func_args_def : func_args_list { $$ = $1; }
+              | { $$ = NULL; }
               ;
 
 begin_func : LEFT_PARENTHESIS { begin_context(); trace("begin of func"); };
 
 func_decl :
     FUNC type id begin_func func_args_def RIGHT_PARENTHESIS
-    block { end_context(); trace("end of func"); }
+    block {
+        end_context();
+        trace("end of func");
+        $$ = ast_create_node(FUNC_DECL, ast_create_function($3, $2.t, $5, $7));
+        $3->meta = ast_create_node(FUNC_DECL, $$);
+        // TODO: check return type
+    }
     ;
 
 /* merge them into program */

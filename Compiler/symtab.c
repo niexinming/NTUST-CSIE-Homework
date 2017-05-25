@@ -107,8 +107,8 @@ void symtab_dump(SYMTAB *symtab)
 	int i, depth = symtab_depth(symtab);
 	SYMTAB_ENTRY *p;
 
-	printf("  depth |  id | symbol\n"
-		   " -------+-----+-------------------------\n");
+	printf("  depth |    id | symbol\n"
+		   " -------+-------+-------------------------\n");
 
 	while(symtab) {
 		for(i = 0; i < SYMTAB_HASH_SIZE; i++) {
