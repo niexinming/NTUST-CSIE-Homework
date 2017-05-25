@@ -11,9 +11,10 @@ AST_VALUE* ast_create_value(int type)
 
 void ast_dump_var(AST_VAR* var)
 {
-    const char *const_or_var = "ERROR";
-    if(var->is_const == CONST) const_or_var = "CONST";
-    if(var->is_const == VAR) const_or_var = "VAR";
+    const char *var_type = "ERROR";
+    if(var->var_type == CONST) var_type = "CONST";
+    if(var->var_type == VAR) var_type = "VAR";
+	if(var->var_type == ARG) var_type = "ARG";
     const char *t = "UNKNOW";
 #define VAR_DUMP_CASE(C) case C: t = #C; break;
     switch (var->data_type) {
@@ -23,7 +24,7 @@ void ast_dump_var(AST_VAR* var)
         VAR_DUMP_CASE(STRING);
         VAR_DUMP_CASE(BOOL);
     }
-    printf("<%s(Name=%s, Type=%s", const_or_var, var->symbol->name, t);
+    printf("<%s(Name=%s, Type=%s", var_type, var->symbol->name, t);
     if(var->val) {
         printf(", Value=");
         switch (var->data_type) {
@@ -40,11 +41,11 @@ void ast_dump_var(AST_VAR* var)
     printf(")>\n");
 }
 
-AST_VAR* ast_create_var(int type, int is_const, unsigned int array_size, SYMTAB_ENTRY *symbol, struct AST_VALUE_s * val)
+AST_VAR* ast_create_var(int type, int var_type, unsigned int array_size, SYMTAB_ENTRY *symbol, struct AST_VALUE_s * val)
 {
     AST_VAR *var = malloc(sizeof(AST_VAR));
     var->data_type = type;
-    var->is_const = is_const;
+    var->var_type = var_type;
     var->array_size = array_size;
     var->symbol = symbol;
     var->val = val;

@@ -52,7 +52,7 @@ typedef struct AST_VALUE_s {
 // variable or paramteter or const
 typedef struct AST_VAR_s {
 	int                 data_type;
-	int                 is_const;
+	int                 var_type;
 	unsigned int        array_size; // zero for non-array variable
 	SYMTAB_ENTRY        *symbol;
 	struct AST_VALUE_s  *val;
