@@ -3,3 +3,6 @@ parser
 scanner.c
 parser.c
 parser.h
+parser.dSYM
+parser.output
+*.pdf
