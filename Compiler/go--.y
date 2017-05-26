@@ -8,7 +8,9 @@
 
 int has_error = 0;
 char err_msg_buf[1024];
+
 void yyerror(const char *errmsg);
+#define yyerrorf(...) sprintf(err_msg_buf, __VA_ARGS__); yyerror(err_msg_buf);
 
 #define trace(...) printf("TRACE: "); printf(__VA_ARGS__); putchar(0x0a)
 
@@ -40,7 +42,6 @@ void end_context() {
     struct AST_NODE_s      *ast_node;
     struct { int t, n; }   data_type;
     struct AST_VAR_s       *var;
-    struct AST_INVOKE_s    *invoke;
     struct AST_EXPR_s      *expr;
 }
 
@@ -64,7 +65,7 @@ void end_context() {
 %token BREAK CASE CONST CONTINUE DEFAULT ELSE FALSE FOR FUNC GO IF IMPORT NIL PRINT PRINTLN RETURN STRUCT SWITCH TRUE TYPE VAR VOID WHILE
 
 /* hack for constant definition */
-%token ARG
+%token PARAM
 
 /* operator priority */
 
@@ -80,22 +81,23 @@ void end_context() {
 %nonassoc ASSIGN ASSIGN_ADD ASSIGN_SUB ASSIGN_MUL ASSIGN_DIV ASSIGN_MOD ASSIGN_XOR
 
 %type <symbol> id;
-%type <symbol> id_eval;
+%type <ast_node> id_eval;
 
 %type <integer> basic_type;
 %type <data_type> type;
 
-%type <value> const_value;
+%type <ast_node> const_value;
 
-%type <var> var_decl;
-%type <var> const_decl;
+%type <ast_node> var_decl;
+%type <ast_node> const_decl;
 
 %type <ast_node> expr;
 
-%type <var> func_args_list;
-%type <var> func_args_def;
+%type <ast_node> func_params_list;
+%type <ast_node> func_params_def;
 %type <ast_node> func_decl;
 
+%type <ast_node> invoke_args;
 %type <ast_node> invoke_stmt;
 
 %type <ast_node> block;
@@ -105,8 +107,7 @@ void end_context() {
 /* atomic things */
 id : ID {
     if(symtab_lookup($1, symtab, 0, NULL)) {
-        sprintf(err_msg_buf, "duplicated symbol: %s", $1);
-        yyerror(err_msg_buf);
+        yyerrorf("duplicated symbol: %s", $1);
     }
 
     if(symtab_insert($1, NULL, symtab, &$$) == 0) {
@@ -117,10 +118,12 @@ id : ID {
 };
 
 id_eval : ID {
-    if(symtab_lookup($1, symtab, 1, &$$) == 0) {
-        sprintf(err_msg_buf, "can not find symbol: %s", $1);
-        yyerror(err_msg_buf);
+    SYMTAB_ENTRY *sym;
+    if(symtab_lookup($1, symtab, 1, &sym) == 0) {
+        yyerrorf("can not find symbol: %s", $1);
     }
+
+    $$ = sym->meta;
 
     free($1);
 };
@@ -138,33 +141,40 @@ type : LEFT_BRACKET CONST_INT RIGHT_BRACKET basic_type { $$.t = $4; $$.n = $2; }
      | VOID { $$.n = 0; $$.t = VOID; }
      ;
 
-const_value : CONST_INT    { $$ = ast_create_value(INT);     $$->integer = $1; }
-            | CONST_REAL   { $$ = ast_create_value(REAL);    $$->real = $1; }
-            | CONST_STRING { $$ = ast_create_value(STRING);  $$->string = strdup($1); }
-            | TRUE         { $$ = ast_create_value(BOOL);    $$->integer = 1; }
-            | FALSE        { $$ = ast_create_value(BOOL);    $$->integer = 0; }
+const_value : CONST_INT    { $$ = ast_create_value_node(INT);     $$->val.integer = $1; }
+            | CONST_REAL   { $$ = ast_create_value_node(REAL);    $$->val.real = $1; }
+            | CONST_STRING { $$ = ast_create_value_node(STRING);  $$->val.string = strdup($1); }
+            | TRUE         { $$ = ast_create_value_node(BOOL);    $$->val.integer = 1; }
+            | FALSE        { $$ = ast_create_value_node(BOOL);    $$->val.integer = 0; }
             ;
 
 /* variables */
 var_decl : VAR id type {
-             $$ = ast_create_var($3.t, VAR, $3.n, $2, NULL);
-             $2->meta = ast_create_node(VAR_DECL, $$);
+             // data_type, var_type, array_size, symbol, default_val
+             $$ = $2->meta = ast_create_var_node($3.t, VAR, $3.n, $2, NULL);
          }
          | VAR id type ASSIGN const_value
          {
-             $$ = ast_create_var($3.t, VAR, $3.n, $2, $5);
-             $2->meta = ast_create_node(VAR_DECL, $$);
+             $$ = $2->meta = ast_create_var_node($3.t, VAR, $3.n, $2, &$5->val);
          }
          ;
 
-const_decl : CONST id type ASSIGN const_value { $$ = ast_create_var($3.t, CONST, $3.n, $2, $5); $2->meta = ast_create_node(CONST_DECL, $$); }
-           | CONST id ASSIGN const_value      { $$ = ast_create_var($4->data_type, CONST, 0, $2, $4); $2->meta = ast_create_node(CONST_DECL, $$);; }
+const_decl : CONST id type ASSIGN const_value {
+               if($3.t != $5->val.data_type) {
+                   yyerrorf("Incompatable data type in const declaration: %s and %s",
+                       ast_get_type_name($3.t), ast_get_type_name($5->val.data_type));
+               }
+               $$ = $2->meta = ast_create_var_node($3.t, CONST, $3.n, $2, &$5->val);
+           }
+           | CONST id ASSIGN const_value {
+               $$ = $2->meta = ast_create_var_node($4->val.data_type, CONST, 0, $2, &$4->val);
+           }
            ;
 
 /* expressions */
 expr : LEFT_PARENTHESIS expr RIGHT_PARENTHESIS { $$ = $2; }
-     | const_value { $$ = ast_create_node(CONST_VAL, $1); }
-     | id_eval { $$ = ast_create_node(VAR_REF, $1); }
+     | const_value { $$ = ast_create_node(CONST_VAL); }
+     | id_eval { $$ = ast_create_node(VAR_REF); }
      | invoke_stmt
      | expr LOGICAL_OR expr
      | expr LOGICAL_AND expr
@@ -191,7 +201,7 @@ expr : LEFT_PARENTHESIS expr RIGHT_PARENTHESIS { $$ = $2; }
 
 
 /* basic stmt */
-assign : id_eval ASSIGN     expr { trace("assign value to var %s", $1->name); }
+assign : id_eval ASSIGN     expr { trace("assign value to var %s", $1->var.symbol->name); }
        | id_eval ASSIGN_ADD expr
        | id_eval ASSIGN_SUB expr
        | id_eval ASSIGN_MUL expr
@@ -203,17 +213,20 @@ assign : id_eval ASSIGN     expr { trace("assign value to var %s", $1->name); }
 return_stmt : RETURN
             | RETURN expr;
 
-invoke_args : expr
-            | invoke_args COMMA expr
-            |
+invoke_args : expr { $$ = $1; }
+            | expr COMMA invoke_args { $1->next = $3; $$ = $1; }
+            | { $$ = NULL; }
             ;
 
 invoke_stmt : id_eval LEFT_PARENTHESIS invoke_args RIGHT_PARENTHESIS {
                 // TODO: create invoke stmt
-                AST_INVOKE *node = malloc(sizeof(AST_INVOKE));
-                node->symbol = $1;
-                $$ = ast_create_node(FUNC_CALL, node);
-                trace("Invoke function : %s", $1->name);
+                if($1->type != FUNC_DECL) {
+                    yyerrorf("ID: %s is not a function", ast_get_name_of($1));
+                    $$ = NULL;
+                } else {
+                    $$ = ast_create_invoke_node(&$1->func, $3);
+                    trace("Invoke function : %s", ast_get_name_of($1));
+                }
             };
 
 stmt_set : assign { trace("assign in stmt"); }
@@ -285,26 +298,28 @@ for_stmt : FOR LEFT_PARENTHESIS
 
 /* functions */
 
-func_args_list : id type { $$ = ast_create_var($2.t, ARG, $2.n, $1, NULL);
-                           $1->meta = ast_create_node(VAR_DECL, $$); }
-               | id type COMMA func_args_list { $$ = ast_create_var($2.t, ARG, $2.n, $1, NULL);
-                                                $1->meta = ast_create_node(VAR_DECL, $$);
-                                                $$->next = $4; }
-               ;
+func_params_list : id type {
+                     $$ = $1->meta = ast_create_var_node($2.t, PARAM, $2.n, $1, NULL);
+                 }
+                 | id type COMMA func_params_list {
+                     $$ = $1->meta = ast_create_var_node($2.t, PARAM, $2.n, $1, NULL);
+                     $$->next = $4;
+                 }
+                 ;
 
-func_args_def : func_args_list { $$ = $1; }
+func_params_def : func_params_list { $$ = $1; }
               | { $$ = NULL; }
               ;
 
 begin_func : LEFT_PARENTHESIS { begin_context(); trace("begin of func"); };
 
 func_decl :
-    FUNC type id begin_func func_args_def RIGHT_PARENTHESIS
+    FUNC type id begin_func func_params_def RIGHT_PARENTHESIS
     block {
         end_context();
         trace("end of func");
-        $$ = ast_create_node(FUNC_DECL, ast_create_function($3, $2.t, $5, $7));
-        $3->meta = ast_create_node(FUNC_DECL, $$);
+
+        $$ = $3->meta = ast_create_func_node($3, $2.t, $5, $7);
         // TODO: check return type
     }
     ;

@@ -5,7 +5,7 @@
 
 typedef struct SYMTAB_ENTRY_s {
 	struct SYMTAB_ENTRY_s *next;
-	void                  *meta;
+	struct AST_NODE_s     *meta;
 	int  id;
 	char name[1];
 } SYMTAB_ENTRY;
