@@ -110,6 +110,13 @@ void bmp_stat (BMP *bmp)
 
 /** DES things **/
 
+struct DATA_BLOCK {
+	union {
+		uint8_t bytes[8];
+		uint64_t block;
+	};
+};
+
 enum BLOCK_CIPHER_MODE { ECB, CBC, CTR, OFB };
 
 typedef struct {
@@ -329,11 +336,12 @@ void* des_create(const uint8_t* key) {
 	return key_sets;
 }
 
-void des_cipher(uint8_t* data, uint8_t* out_buffer, void* key_context, int is_encrypt) {
+void des_cipher(void* pdata, void* pout, void* key_context, int is_encrypt) {
 	int i, k;
 	int shift_size;
 	uint8_t shift_byte;
 	key_set *key_sets = (key_set*)key_context;
+	uint8_t *data = pdata, *out_buffer = pout;
 
 	uint8_t initial_permutation[8];
 	memset(initial_permutation, 0, 8);
@@ -529,71 +537,76 @@ void inc (uint8_t *data, size_t len)
 	} while (len > 0);
 }
 
-void des_encrypt (const uint8_t *key, const uint8_t *iv, enum BLOCK_CIPHER_MODE mode, uint8_t *data, size_t len)
+void des_encrypt (const uint8_t *key, const void *piv, enum BLOCK_CIPHER_MODE mode, void *pdata, size_t len)
 {
 	assert(len % 8 == 0);
+	len /= 8;
+
 	void *ctx = des_create(key);
-	uint8_t buff[8], vec[8];
+	struct DATA_BLOCK *data = pdata, buff, vec;
+	const struct DATA_BLOCK *iv = piv;
 
 	if (mode == ECB) {
-		for(int i = 0; i < len; i += 8) {
-			des_cipher(data + i, buff, ctx, 1);
-			memcpy(data + i, buff, 8);
+		for(int i = 0; i < len; i++) {
+			des_cipher(data + i, &buff, ctx, 1);
+			data[i] = buff;
 		}
 	} else if (mode == CBC) {
-		memcpy(vec, iv, 8);
+		vec = *iv;
 
-		for(int i = 0; i < len; i += 8) {
-			des_cipher(data + i, buff, ctx, 1);
-			xor(vec, buff, 8);
-			memcpy(data + i, vec, 8);
+		for(int i = 0; i < len; i++) {
+			des_cipher(data + i, &buff, ctx, 1);
+			vec.block ^= buff.block;
+			data[i] = vec;
 		}
 	} else if (mode == CTR) {
-		memcpy(vec, iv, 8);
+		vec = *iv;
 
-		uint8_t stream_key[8];
-
-		for(int i = 0; i < len; i += 8) {
-			des_cipher(vec, stream_key, ctx, 1);
-			xor(data + i, stream_key, 8);
-			inc(vec, 8);
+		for(int i = 0; i < len; i++) {
+			des_cipher(&vec, &buff, ctx, 1);
+			data[i].block ^= buff.block;
+			inc(vec.bytes, 8);
 		}
 	} else if (mode == OFB) {
-		memcpy(vec, iv, 8);
+		vec = *iv;
 
-		for(int i = 0; i < len; i += 8) {
-			des_cipher(vec, buff, ctx, 1);
-			memcpy(vec, buff, 8);
-			xor(data + i, vec, 8);
+		for(int i = 0; i < len; i++) {
+			des_cipher(&vec, &buff, ctx, 1);
+			vec = buff;
+			data[i].block ^= vec.block;
 		}
 	}
 
 	des_destory(ctx);
 }
 
-void des_decrypt (const uint8_t *key, const uint8_t *iv, enum BLOCK_CIPHER_MODE mode, uint8_t *data, size_t len)
+void des_decrypt (const uint8_t *key, const void *piv, enum BLOCK_CIPHER_MODE mode, void *pdata, size_t len)
 {
 	if (mode == CTR || mode == OFB) {
-		des_encrypt(key, iv, mode, data, len);
+		des_encrypt(key, piv, mode, pdata, len);
 		return;
 	}
+
 	assert(len % 8 == 0);
+	len /= 8;
+
 	void *ctx = des_create(key);
-	uint8_t buff[8], vec[8];
+	struct DATA_BLOCK *data = pdata, buff, vec;
+	const struct DATA_BLOCK *iv = piv;
 
 	if (mode == ECB) {
-		for(int i = 0; i < len; i += 8) {
-			des_cipher(data + i, buff, ctx, 0);
-			memcpy(data + i, buff, 8);
+		for(int i = 0; i < len; i++) {
+			des_cipher(data + i, &buff, ctx, 0);
+			data[i] = buff;
 		}
 	} else if (mode == CBC) {
-		memcpy(vec, iv, 8);
+		vec = *iv;
 
-		for(int i = 0; i < len; i += 8) {
-			xor(vec, data + i, 8);
-			des_cipher(vec, buff, ctx, 0);
-			memcpy(vec, data + i, 8);
-			memcpy(data + i, buff, 8);
+		for(int i = 0; i < len; i++) {
+			vec.block ^= data[i].block;
+			des_cipher(&vec, &buff, ctx, 0);
+			vec = data[i];
+			data[i] = buff;
 		}
 	}
 
