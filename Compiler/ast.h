@@ -9,10 +9,10 @@ enum AST_TYPE {
 	CONST_VAL,
 
 	// const define
-	CONST_DECL,
+	// CONST_DECL,
 
 	// variable or argument reference
-	VAR_REF,
+	//VAR_REF,
 
 	// variable or function arguments
 	VAR_DECL,
@@ -61,33 +61,46 @@ typedef struct AST_VAR_s {
 // function declaration
 typedef struct AST_FUNC_s {
 	struct SYMTAB_ENTRY_s *symbol;
-	int                   return_type;
-	unsigned int          param_count;
-	struct AST_NODE_s     *params;
-	struct AST_NODE_s     *body;
+	int                     return_type;
+	unsigned int            param_count;
+	const struct AST_NODE_s *params;
+	const struct AST_NODE_s *body;
 } AST_FUNC;
 
 // function call
 typedef struct AST_INVOKE_s {
-	struct AST_FUNC_s     *func;
-	unsigned int          args_count;
-	struct AST_NODE_s     *args;
+	const struct AST_FUNC_s *func;
+	unsigned int            args_count;
+	const struct AST_NODE_s *args;
 } AST_INVOKE;
 
 // assignment
 typedef struct AST_ASSIGN_s {
-	int               index; // array index, 0 for non-array
-	struct AST_VAR_s  *lval; // which variable to write
-	struct AST_NODE_s *rval; // what to write
+	int                     index; // array index, 0 for non-array
+	const struct AST_VAR_s  *lval; // which variable to write
+	const struct AST_NODE_s *rval; // what to write
 } AST_ASSIGN;
 
 // expression
 typedef struct AST_EXPR_s {
-	int               data_type;
-	int               oper;
-	struct AST_NODE_s *lval;
-	struct AST_NODE_s *rval;
+	int                     data_type;
+	int                     oper;
+	const struct AST_NODE_s *lval;
+	const struct AST_NODE_s *rval;
 } AST_EXPR;
+
+typedef struct AST_IF_s {
+	const struct AST_NODE_s *cond;
+	const struct AST_NODE_s *true_stmt;
+	const struct AST_NODE_s *false_stmt;
+} AST_IF;
+
+typedef struct AST_FOR_s {
+	const struct AST_NODE_s *init;
+	const struct AST_NODE_s *cond;
+	const struct AST_NODE_s *increment;
+	const struct AST_NODE_s *body;
+} AST_FOR;
 
 // basic ast node
 typedef struct AST_NODE_s {
@@ -100,8 +113,13 @@ typedef struct AST_NODE_s {
 		struct AST_INVOKE_s invoke;
 		struct AST_ASSIGN_s assignment;
 		struct AST_EXPR_s   expr;
+		struct AST_IF_s     if_stmt;
+		struct AST_FOR_s    for_stmt;
+		struct AST_NODE_s   *child;
 	};
 } AST_NODE;
+
+#define NO_NODE ((AST_NODE*)-1)
 
 const char * ast_get_type_name(int typecode);
 AST_NODE* ast_create_node(enum AST_TYPE type);
@@ -114,9 +132,15 @@ AST_NODE* ast_create_var_node(int data_type, int var_type,
 AST_NODE* ast_create_func_node(SYMTAB_ENTRY *symbol, int return_type,
 		AST_NODE *params, AST_NODE *body);
 AST_NODE* ast_create_invoke_node(AST_FUNC *func, AST_NODE *args);
-AST_NODE* ast_create_expr_node(int oper, int data_type, AST_NODE *lval,
-		AST_NODE* rval);
-int ast_get_expr_type(AST_NODE *node);
-const char * ast_get_name_of(AST_NODE *node);
+AST_NODE* ast_create_expr_node(const AST_NODE *l, int op, const AST_NODE *r);
+AST_NODE* ast_create_if_node(AST_NODE* cond, AST_NODE *true_stmt,
+		AST_NODE *false_stmt);
+AST_NODE* ast_create_for_node(AST_NODE* init, AST_NODE* cond,
+		AST_NODE *increment, AST_NODE *body);
+AST_NODE* ast_create_assign(AST_NODE *var, int idx, int op, AST_NODE *val);
+int ast_get_expr_type(const AST_NODE *node);
+const char * ast_get_name_of(const AST_NODE *node);
+
+extern const struct AST_NODE_s NODE_CONST_STR_BR;
 
 #endif

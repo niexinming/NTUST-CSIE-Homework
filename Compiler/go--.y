@@ -42,7 +42,6 @@ void end_context() {
     struct AST_NODE_s      *ast_node;
     struct { int t, n; }   data_type;
     struct AST_VAR_s       *var;
-    struct AST_EXPR_s      *expr;
 }
 
 /* tokens definition */
@@ -57,15 +56,19 @@ void end_context() {
 
 %token COMMA COLON SEMICOLON LEFT_PARENTHESIS RIGHT_PARENTHESIS LEFT_BRACKET RIGHT_BRACKET LEFT_BRACE RIGHT_BRACE
 %token LOGICAL_NOT BITWISE_NOT
-%token ADD SUB MUL DIV MOD XOR BITWISE_AND BITWISE_OR LOGICAL_AND LOGICAL_OR
 /*
+
+- in %left
+%token ADD SUB MUL DIV MOD XOR BITWISE_AND BITWISE_OR LOGICAL_AND LOGICAL_OR
 %token LT GT LTE GTE EQ NEQ
+
+- in %nonassoc
 %token ASSIGN ASSIGN_ADD ASSIGN_SUB ASSIGN_MUL ASSIGN_DIV ASSIGN_MOD ASSIGN_XOR
 */
 %token BREAK CASE CONST CONTINUE DEFAULT ELSE FALSE FOR FUNC GO IF IMPORT NIL PRINT PRINTLN RETURN STRUCT SWITCH TRUE TYPE VAR VOID WHILE
 
 /* hack for constant definition */
-%token PARAM
+%token PARAM NEGATIVE NOP
 
 /* operator priority */
 
@@ -92,6 +95,8 @@ void end_context() {
 %type <ast_node> const_decl;
 
 %type <ast_node> expr;
+%type <ast_node> assign;
+%type <ast_node> return_stmt;
 
 %type <ast_node> func_params_list;
 %type <ast_node> func_params_def;
@@ -100,7 +105,24 @@ void end_context() {
 %type <ast_node> invoke_args;
 %type <ast_node> invoke_stmt;
 
+%type <ast_node> stmt_set;
+%type <ast_node> stmt;
+%type <ast_node> stmts;
 %type <ast_node> block;
+
+%type <ast_node> print_stmt;
+
+%type <ast_node> if_stmt;
+%type <ast_node> if_body;
+
+
+
+%type <ast_node> for_init_stmt;
+%type <ast_node> for_cond;
+%type <ast_node> for_inc;
+%type <ast_node> for_body;
+%type <ast_node> for_stmt;
+
 
 %%
 
@@ -173,45 +195,52 @@ const_decl : CONST id type ASSIGN const_value {
 
 /* expressions */
 expr : LEFT_PARENTHESIS expr RIGHT_PARENTHESIS { $$ = $2; }
-     | const_value { $$ = ast_create_node(CONST_VAL); }
-     | id_eval { $$ = ast_create_node(VAR_REF); }
-     | invoke_stmt
-     | expr LOGICAL_OR expr
-     | expr LOGICAL_AND expr
-     | expr LOGICAL_NOT expr
-     | expr LT expr
-     | expr GT expr
-     | expr LTE expr
-     | expr GTE expr
-     | expr EQ expr
-     | expr NEQ expr
-     | expr ADD expr
-     | expr SUB expr
-     | expr BITWISE_OR expr
-     | expr BITWISE_AND expr
-     | expr XOR expr
-     | expr MUL expr
-     | expr DIV expr
-     | expr MOD expr
-     | BITWISE_NOT expr
-     | LOGICAL_NOT expr
-     | SUB expr
+     | const_value           { $$ = $1; }
+     | id_eval               { $$ = $1; }
+     | invoke_stmt           { $$ = $1; }
+     | expr LOGICAL_OR expr  { $$ = ast_create_expr_node($1, LOGICAL_OR,  $3); }
+     | expr LOGICAL_AND expr { $$ = ast_create_expr_node($1, LOGICAL_AND, $3); }
+     | expr LT expr          { $$ = ast_create_expr_node($1, LT,          $3); }
+     | expr GT expr          { $$ = ast_create_expr_node($1, GT,          $3); }
+     | expr LTE expr         { $$ = ast_create_expr_node($1, LTE,         $3); }
+     | expr GTE expr         { $$ = ast_create_expr_node($1, GTE,         $3); }
+     | expr EQ expr          { $$ = ast_create_expr_node($1, EQ,          $3); }
+     | expr NEQ expr         { $$ = ast_create_expr_node($1, NEQ,         $3); }
+     | expr BITWISE_OR expr  { $$ = ast_create_expr_node($1, BITWISE_OR,  $3); }
+     | expr BITWISE_AND expr { $$ = ast_create_expr_node($1, BITWISE_AND, $3); }
+     | expr ADD expr         { $$ = ast_create_expr_node($1, ADD,         $3); }
+     | expr SUB expr         { $$ = ast_create_expr_node($1, SUB,         $3); }
+     | expr XOR expr         { $$ = ast_create_expr_node($1, XOR,         $3); }
+     | expr MUL expr         { $$ = ast_create_expr_node($1, MUL,         $3); }
+     | expr DIV expr         { $$ = ast_create_expr_node($1, DIV,         $3); }
+     | expr MOD expr         { $$ = ast_create_expr_node($1, MOD,         $3); }
+     | LOGICAL_NOT expr      { $$ = ast_create_expr_node($2, LOGICAL_NOT, NO_NODE); }
+     | BITWISE_NOT expr      { $$ = ast_create_expr_node($2, BITWISE_NOT, NO_NODE); }
+     | SUB expr              { $$ = ast_create_expr_node($2, NEGATIVE,    NO_NODE); }
      ;
 
 
 
 /* basic stmt */
-assign : id_eval ASSIGN     expr { trace("assign value to var %s", $1->var.symbol->name); }
-       | id_eval ASSIGN_ADD expr
-       | id_eval ASSIGN_SUB expr
-       | id_eval ASSIGN_MUL expr
-       | id_eval ASSIGN_DIV expr
-       | id_eval ASSIGN_MOD expr
-       | id_eval ASSIGN_XOR expr
+assign : id_eval ASSIGN     expr { $$ = ast_create_assign($1, 0, NOP, $3); }
+       | id_eval ASSIGN_ADD expr { $$ = ast_create_assign($1, 0, ADD, $3); }
+       | id_eval ASSIGN_SUB expr { $$ = ast_create_assign($1, 0, SUB, $3); }
+       | id_eval ASSIGN_MUL expr { $$ = ast_create_assign($1, 0, MUL, $3); }
+       | id_eval ASSIGN_DIV expr { $$ = ast_create_assign($1, 0, DIV, $3); }
+       | id_eval ASSIGN_MOD expr { $$ = ast_create_assign($1, 0, MOD, $3); }
+       | id_eval ASSIGN_XOR expr { $$ = ast_create_assign($1, 0, XOR, $3); }
+       | id_eval LEFT_BRACKET CONST_INT RIGHT_BRACKET ASSIGN     expr { $$ = ast_create_assign($1, $3, NOP, $6); }
+       | id_eval LEFT_BRACKET CONST_INT RIGHT_BRACKET ASSIGN_ADD expr { $$ = ast_create_assign($1, $3, ADD, $6); }
+       | id_eval LEFT_BRACKET CONST_INT RIGHT_BRACKET ASSIGN_SUB expr { $$ = ast_create_assign($1, $3, SUB, $6); }
+       | id_eval LEFT_BRACKET CONST_INT RIGHT_BRACKET ASSIGN_MUL expr { $$ = ast_create_assign($1, $3, MUL, $6); }
+       | id_eval LEFT_BRACKET CONST_INT RIGHT_BRACKET ASSIGN_DIV expr { $$ = ast_create_assign($1, $3, DIV, $6); }
+       | id_eval LEFT_BRACKET CONST_INT RIGHT_BRACKET ASSIGN_MOD expr { $$ = ast_create_assign($1, $3, MOD, $6); }
+       | id_eval LEFT_BRACKET CONST_INT RIGHT_BRACKET ASSIGN_XOR expr { $$ = ast_create_assign($1, $3, XOR, $6); }
        ;
 
-return_stmt : RETURN
-            | RETURN expr;
+return_stmt : RETURN { $$ = ast_create_node(RETURN_STMT); }
+            | RETURN expr { $$ = ast_create_node(RETURN_STMT); $$->child = $2; }
+            ;
 
 invoke_args : expr { $$ = $1; }
             | expr COMMA invoke_args { $1->next = $3; $$ = $1; }
@@ -219,7 +248,6 @@ invoke_args : expr { $$ = $1; }
             ;
 
 invoke_stmt : id_eval LEFT_PARENTHESIS invoke_args RIGHT_PARENTHESIS {
-                // TODO: create invoke stmt
                 if($1->type != FUNC_DECL) {
                     yyerrorf("ID: %s is not a function", ast_get_name_of($1));
                     $$ = NULL;
@@ -229,20 +257,21 @@ invoke_stmt : id_eval LEFT_PARENTHESIS invoke_args RIGHT_PARENTHESIS {
                 }
             };
 
-stmt_set : assign { trace("assign in stmt"); }
-         | var_decl { trace("var_decl in stmt"); }
-         | const_decl { trace("const_decl in stmt"); }
-         | if_stmt { trace("if_stmt in stmt"); }
-         | print_stmt { trace("print in stmt"); }
-         | for_stmt { trace("for in stmt"); }
-         | return_stmt { trace("return in stmt"); }
-         | invoke_stmt { trace("invoke in stmt"); }
+stmt_set : assign      { $$ = $1; trace("assign in stmt"); }
+         | var_decl    { $$ = $1; trace("var_decl in stmt"); }
+         | const_decl  { $$ = $1; trace("const_decl in stmt"); }
+         | if_stmt     { $$ = $1; trace("if_stmt in stmt"); }
+         | print_stmt  { $$ = $1; trace("print in stmt"); }
+         | for_stmt    { $$ = $1; trace("for in stmt"); }
+         | return_stmt { $$ = $1; trace("return in stmt"); }
+         | invoke_stmt { $$ = $1; trace("invoke in stmt"); }
          ;
 
-stmt : stmt_set { trace("stmt"); } | stmt_set SEMICOLON { trace("stmt_with_semi"); };
+stmt : stmt_set           { $$ = $1; trace("stmt"); }
+     | stmt_set SEMICOLON { $$ = $1; trace("stmt_with_semi"); };
 
-stmts : stmt
-      | stmts stmt
+stmts : stmt { $$ = $1; }
+      | stmt stmts { $$ = $1; $1->next = $2; }
       ;
 
 /* { ... code ... } */
@@ -250,50 +279,56 @@ begin_block : LEFT_BRACE { begin_context(); trace("begin of block"); };
 
 end_block : RIGHT_BRACE { end_context(); trace("end of block"); };
 
-block : begin_block stmts end_block;
+block : begin_block stmts end_block { $$ = $2; };
 
 /* special stmt */
-print_stmt : PRINT expr
-           | PRINTLN expr
+print_stmt : PRINT expr { $$ = ast_create_node(PRINT_STMT); $$->child = $2; }
+           | PRINTLN expr {
+               $$ = ast_create_node(PRINT_STMT);
+               trace("hack for println");
+               $$->child = ast_create_expr_node($2, ADD, &NODE_CONST_STR_BR);
+           }
            ;
 
 /* control flow */
-if_stmt : IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS
-            if_body
-        | IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS
-            if_body
-          ELSE
-            if_body
+if_stmt : IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS if_body {
+            $$ = ast_create_if_node($3, $5, NO_NODE);
+        }
+        | IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS if_body ELSE if_body {
+            $$ = ast_create_if_node($3, $5, $7);
+        }
         ;
 
-if_body : block | stmt;
+if_body : block { $$ = $1; }
+        | stmt { $$ = $1; };
 
-for_init_stmt : stmt_set
-              |
+for_init_stmt : stmt_set { $$ = $1; }
+              | { $$ = NO_NODE; }
               ;
 
-for_cond : expr
-         |
+for_cond : expr { $$ = $1; }
          ;
 
-for_inc : stmt_set
-        |
+for_inc : stmt_set { $$ = $1; }
+        | { $$ = NO_NODE; }
         ;
 
-for_body : block | stmt;
+for_body : block { $$ = $1; }
+         | stmt { $$ = $1; }
+         ;
 
 for_stmt : FOR LEFT_PARENTHESIS
                for_init_stmt SEMICOLON
                for_cond SEMICOLON
                for_inc
-           RIGHT_PARENTHESIS for_body
+           RIGHT_PARENTHESIS for_body { $$ = ast_create_for_node($3, $5, $7, $9); }
          | FOR LEFT_PARENTHESIS
                for_cond SEMICOLON
                for_inc
-           RIGHT_PARENTHESIS for_body
+           RIGHT_PARENTHESIS for_body { $$ = ast_create_for_node(NO_NODE, $3, $5, $7); }
          | FOR LEFT_PARENTHESIS
                for_cond
-           RIGHT_PARENTHESIS for_body
+           RIGHT_PARENTHESIS for_body { $$ = ast_create_for_node(NO_NODE, $3, NO_NODE, $5); }
          ;
 
 /* functions */
@@ -325,6 +360,7 @@ func_decl :
     ;
 
 /* merge them into program */
+/* TODO */
 program : var_decl program
         | const_decl program
         | func_decl program
