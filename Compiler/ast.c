@@ -351,8 +351,6 @@ int ast_get_expr_type(const AST_NODE *node)
 
 		case ASSIGN_STMT:
 			return node->assignment.lval->data_type;
-		case ASSIGN_ARRAY_STMT:
-			return node->assignment.lval->data_type;
 
 		case PRINT_STMT:
 		case READ_STMT:

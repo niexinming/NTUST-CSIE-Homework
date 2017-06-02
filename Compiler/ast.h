@@ -17,7 +17,6 @@ enum AST_TYPE {
 
 	// assignment
 	ASSIGN_STMT,
-	ASSIGN_ARRAY_STMT,
 
 	// first-class special statment for IO
 	PRINT_STMT,
