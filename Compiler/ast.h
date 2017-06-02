@@ -116,6 +116,7 @@ typedef struct AST_NODE_s {
 
 const char * ast_get_type_name(int typecode);
 AST_NODE* ast_create_node(enum AST_TYPE type);
+const char * ast_get_op_str(int op);
 unsigned int ast_node_length(AST_NODE *node);
 AST_NODE* ast_create_value_node(int type);
 void ast_dump_var(AST_VAR* var);

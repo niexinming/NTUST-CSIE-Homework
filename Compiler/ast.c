@@ -40,6 +40,33 @@ const char * ast_get_var_type(int var_type)
 	}
 }
 
+const char * ast_get_op_str(int op)
+{
+	switch(op) {
+		case LOGICAL_OR:  return "||";
+		case LOGICAL_AND: return "&&";
+		case LT:          return "<";
+		case GT:          return ">";
+		case LTE:         return "<=";
+		case GTE:         return ">=";
+		case EQ:          return "==";
+		case NEQ:         return "!=";
+		case BITWISE_OR:  return "|";
+		case BITWISE_AND: return "&";
+		case ADD:         return "+";
+		case SUB:         return "-";
+		case XOR:         return "^";
+		case MUL:         return "*";
+		case DIV:         return "/";
+		case MOD:         return "%";
+		case LOGICAL_NOT: return "!";
+		case BITWISE_NOT: return "~";
+		case NEGATIVE:    return "-";
+		default:          assert(NULL); // unknown op
+	}
+	return NULL;
+}
+
 AST_NODE* ast_create_node(enum AST_TYPE type)
 {
 	AST_NODE *ast_node = malloc(sizeof(AST_NODE));
