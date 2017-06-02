@@ -81,6 +81,9 @@ unsigned int ast_node_length(AST_NODE *node)
 	if(node == NULL) {
 		return -1;
 	}
+	if(node == NO_NODE) {
+		return 0;
+	}
 	unsigned int d = 0;
 	while(node) {
 		d++;
