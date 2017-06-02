@@ -112,7 +112,7 @@ typedef struct AST_NODE_s {
 	};
 } AST_NODE;
 
-#define NO_NODE ((AST_NODE*)-1)
+#define NO_NODE ((void*)-1)
 
 const char * ast_get_type_name(int typecode);
 AST_NODE* ast_create_node(enum AST_TYPE type);
