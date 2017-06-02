@@ -77,7 +77,7 @@ typedef struct AST_ASSIGN_s {
 // expression
 typedef struct AST_EXPR_s {
 	int                     data_type;
-	int                     oper;
+	int                     op;
 	const struct AST_NODE_s *lval;
 	const struct AST_NODE_s *rval;
 } AST_EXPR;

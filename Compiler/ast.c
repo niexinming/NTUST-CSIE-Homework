@@ -295,7 +295,7 @@ AST_NODE* ast_create_expr_node(const AST_NODE *l, int op, const AST_NODE *r)
 success_follow_ltype:
 	node->expr.data_type = ltype;
 success:
-	node->expr.oper = op;
+	node->expr.op = op;
 	node->expr.lval = l;
 	node->expr.rval = r;
 	return node;
