@@ -119,6 +119,7 @@ identifier	[a-zA-Z_][a-zA-Z0-9_]*
 <INITIAL>"var"		{ token(VAR); }
 <INITIAL>"void"		{ token(VOID); }
 <INITIAL>"while"	{ token(WHILE); }
+<INITIAL>"read"     { token(READ); }
 
 
  /** identifier **/

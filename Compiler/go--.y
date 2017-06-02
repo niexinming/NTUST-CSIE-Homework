@@ -65,7 +65,7 @@ void end_context() {
 - in %nonassoc
 %token ASSIGN ASSIGN_ADD ASSIGN_SUB ASSIGN_MUL ASSIGN_DIV ASSIGN_MOD ASSIGN_XOR
 */
-%token BREAK CASE CONST CONTINUE DEFAULT ELSE FALSE FOR FUNC GO IF IMPORT NIL PRINT PRINTLN RETURN STRUCT SWITCH TRUE TYPE VAR VOID WHILE
+%token BREAK CASE CONST CONTINUE DEFAULT ELSE FALSE FOR FUNC GO IF IMPORT NIL PRINT PRINTLN READ RETURN STRUCT SWITCH TRUE TYPE VAR VOID WHILE
 
 /* hack for constant definition */
 %token PARAM NEGATIVE NOP
@@ -111,6 +111,7 @@ void end_context() {
 %type <ast_node> block;
 
 %type <ast_node> print_stmt;
+%type <ast_node> read_stmt;
 
 %type <ast_node> if_stmt;
 %type <ast_node> if_body;
@@ -262,6 +263,7 @@ stmt_set : assign      { $$ = $1; trace("assign in stmt"); }
          | const_decl  { $$ = $1; trace("const_decl in stmt"); }
          | if_stmt     { $$ = $1; trace("if_stmt in stmt"); }
          | print_stmt  { $$ = $1; trace("print in stmt"); }
+         | read_stmt   { $$ = $1; trace("read in stmt"); }
          | for_stmt    { $$ = $1; trace("for in stmt"); }
          | return_stmt { $$ = $1; trace("return in stmt"); }
          | invoke_stmt { $$ = $1; trace("invoke in stmt"); }
@@ -289,6 +291,9 @@ print_stmt : PRINT expr { $$ = ast_create_node(PRINT_STMT); $$->child = $2; }
                $$->child = ast_create_expr_node($2, ADD, &NODE_CONST_STR_BR);
            }
            ;
+
+read_stmt : READ id_eval { $$ = ast_create_node(READ_STMT); $$->child = $2; }
+          ;
 
 /* control flow */
 if_stmt : IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS if_body {
