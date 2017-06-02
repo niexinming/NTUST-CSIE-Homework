@@ -119,7 +119,7 @@ AST_NODE* ast_create_node(enum AST_TYPE type);
 const char * ast_get_op_str(int op);
 unsigned int ast_node_length(AST_NODE *node);
 AST_NODE* ast_create_value_node(int type);
-void ast_dump_var(AST_VAR* var);
+void ast_dump_var(const AST_VAR* var);
 AST_NODE* ast_create_var_node(int data_type, int var_type,
 		unsigned int array_size, SYMTAB_ENTRY *symbol,
 		struct AST_VALUE_s * default_val);

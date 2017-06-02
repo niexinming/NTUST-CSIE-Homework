@@ -96,7 +96,7 @@ AST_NODE* ast_create_value_node(int type)
     return node;
 }
 
-void ast_dump_var(AST_VAR* var)
+void ast_dump_var(const AST_VAR* var)
 {
 	if(var == NULL) {
 		puts("<ERROR(var is null)>");
