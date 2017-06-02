@@ -21,12 +21,12 @@ const struct AST_NODE_s NODE_CONST_STR_BR = {
 const char * ast_get_type_name(int typecode)
 {
 	switch(typecode) {
-		case VOID: return "VOID";
-		case INT: return "INT";
-		case BOOL: return "BOOL";
-		case REAL: return "REAL";
+		case VOID:   return "VOID";
+		case INT:    return "INT";
+		case BOOL:   return "BOOL";
+		case REAL:   return "REAL";
 		case STRING: return "STRING";
-		default: return "UNKNOWN";
+		default:     return "UNKNOWN";
 	}
 }
 
@@ -34,9 +34,9 @@ const char * ast_get_var_type(int var_type)
 {
 	switch (var_type) {
 		case CONST: return "CONST";
-		case VAR: return "VAR";
+		case VAR:   return "VAR";
 		case PARAM: return "PARAM";
-		default: return "UNKNOWN";
+		default:    return "UNKNOWN";
 	}
 }
 

@@ -53,7 +53,7 @@ typedef struct AST_VAR_s {
 
 // function declaration
 typedef struct AST_FUNC_s {
-	struct SYMTAB_ENTRY_s *symbol;
+	struct SYMTAB_ENTRY_s   *symbol;
 	int                     return_type;
 	unsigned int            param_count;
 	const struct AST_NODE_s *params;
