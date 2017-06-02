@@ -8,12 +8,6 @@ enum AST_TYPE {
 	// literal value
 	CONST_VAL,
 
-	// const define
-	// CONST_DECL,
-
-	// variable or argument reference
-	//VAR_REF,
-
 	// variable or function arguments
 	VAR_DECL,
 

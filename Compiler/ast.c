@@ -75,6 +75,12 @@ void ast_dump_var(AST_VAR* var)
 		puts("<ERROR(var is null)>");
 		return;
 	}
+
+	if(var == NO_NODE) {
+		puts("<VAR(NO_NODE)>");
+		return;
+	}
+
     const char *var_type = ast_get_var_type(var->var_type);
     const char *data_type = ast_get_type_name(var->data_type);
     printf("<%s(Name=%s, Type=%s", var_type, var->symbol->name, data_type);
@@ -335,11 +341,6 @@ int ast_get_expr_type(const AST_NODE *node)
 	switch(node->type) {
 		case CONST_VAL:
 			return node->val.data_type;
-//		case CONST_DECL:
-//			return node->var.data_type;
-
-//		case VAR_REF:
-//			return node->var.data_type;
 		case VAR_DECL:
 			return node->var.data_type;
 
@@ -375,7 +376,6 @@ const char * ast_get_name_of(const AST_NODE *node)
 {
 	if(node == NULL || node == NO_NODE) return NULL;
 	switch(node->type) {
-//		case CONST_DECL:
 		case VAR_DECL:
 			return node->var.symbol->name;
 		case FUNC_DECL:
