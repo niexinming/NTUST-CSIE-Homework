@@ -140,11 +140,24 @@ class InteractiveShell(cmd.Cmd):
         keygen [bits=1024]
         """
         if not bits: bits = 1024
+
         try:
-            key = RSAKey(bits=int(bits), e=int(self.config['e']))
+            bits = int(bits)
+        except:
+            print('Invalid number')
+            return
+
+        if bits > 2048:
+            print('You are generating long RSA keypair, it may take some while.')
+            print('Interrupt by Ctrl-C')
+
+        try:
+            key = RSAKey(bits=bits, e=int(self.config['e']))
             self.setkey(key)
         except ValueError:
             print('Can not generate key')
+        except KeyboardInterrupt:
+            print('Canceld')
 
     def do_prime(self, bits):
         """
