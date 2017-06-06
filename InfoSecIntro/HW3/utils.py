@@ -1,7 +1,7 @@
 __all__ = [
     'egcd', 'modinv', 'fpow',
     'Str', 'Bytes', 'IntTypes',
-    'bytes2int', 'int2bytes'
+    'bytes2int', 'int2bytes', 'ensure_bytes'
 ]
 
 try: # python 2/3 compatability
@@ -18,6 +18,14 @@ except:
         return int.from_bytes(ensure_bytes(b), 'little')
     def int2bytes(b, sz):
         return b.to_bytes(sz, 'little')
+
+def ensure_bytes(s):
+    if type(s) is Str:
+        return s.encode('utf-8')
+    elif type(s) in (Bytes, bytearray):
+        return Bytes(s)
+    else:
+        raise TypeError
 
 def egcd(a, b):
     l, r = abs(a), abs(b)

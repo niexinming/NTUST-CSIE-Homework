@@ -139,7 +139,7 @@ def randprime_bits(n=256):
     return randprime_range(2**n, 2**(n+1))
 
 if __name__ == '__main__':
-    for bits in (16, 32, 64, 128, 256, 512, 1024, 2048, 1024, 2048):
+    for bits in (16, 32, 64, 128, 256, 512, 1024):
         res = None
         def p(s):
             global res

@@ -7,14 +7,6 @@ from utils import *
 
 logger = logging.getLogger('rsa')
 
-def ensure_bytes(s):
-    if type(s) is Str:
-        return s.encode('utf-8')
-    elif type(s) in (Bytes, bytearray):
-        return Bytes(s)
-    else:
-        raise TypeError
-
 def hex_or_none(x):
     if type(x) in IntTypes:
         return '0x%x' % x
@@ -165,7 +157,7 @@ class RSA(object):
         if not self.key._can_encrypt:
             raise AttributeError('This key object can not do encryption')
         if type(msg) is not int:
-            msg = int.from_bytes(ensure_bytes(msg), 'little')
+            msg = bytes2int(ensure_bytes(msg))
 
         return fpow(msg, self.key.e, self.key.N)
 
@@ -176,7 +168,7 @@ class RSA(object):
         if not self.key._can_decrypt:
             raise AttributeError('This key object can not do decryption')
         if type(msg) is not int:
-            msg = int.from_bytes(ensure_bytes(msg), 'little')
+            msg = bytes2int(ensure_bytes(msg))
 
         if self.key._can_crt:
             return self._crt_decrypt(msg)
@@ -190,10 +182,10 @@ class RSA(object):
         return m2 + k * self.key.q
 
     def encrypt_block(self, msg):
-        return self.encrypt(msg).to_bytes(self.key.block_size, 'little')
+        return int2bytes(self.encrypt(msg), self.key.block_size)
 
     def decrypt_block(self, msg):
-        return self.decrypt(msg).to_bytes(self.key.block_size, 'little')
+        return int2bytes(self.decrypt(msg), self.key.block_size - 1)
 
     def encrypt_data(self, data):
         bs = self.key.block_size - 1
@@ -214,7 +206,8 @@ if __name__ == '__main__':
     logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
     cipher = RSA(bits=2048)
-    print('Key: %r' % cipher.key)
+    print('Key:')
+    cipher.key.dump()
     s = random_str(64)
     print('Random Str: %s' % s)
     c = cipher.encrypt_data(s)
