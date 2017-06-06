@@ -106,7 +106,7 @@ class InteractiveShell(cmd.Cmd):
         self.last = c
 
         print('Source data: %r...' % data[:256])
-        print('Encrypted: %s' % enhex(c))
+        print('Encrypted: %r...' % enhex(c[:256]))
 
     def do_dec(self, file):
         """
@@ -133,7 +133,7 @@ class InteractiveShell(cmd.Cmd):
         self.last = m
 
         print('Source data: %r...' % data[:256])
-        print('Decrypted: %s' % m)
+        print('Decrypted: %r...' % m[:256])
 
     def do_keygen(self, bits):
         """
