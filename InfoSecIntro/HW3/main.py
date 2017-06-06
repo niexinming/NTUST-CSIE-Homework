@@ -62,7 +62,7 @@ class InteractiveShell(cmd.Cmd):
         """
 
         try:
-            key, val = line.split(maxsplit=1)
+            key, val = line.split()
         except ValueError:
             print('error while parsing arguments')
             return
