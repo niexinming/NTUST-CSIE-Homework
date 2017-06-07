@@ -31,7 +31,7 @@ class App(object):
         def f(v):
             if v == None:
                 return 'None'
-            elif type(v) == int:
+            elif type(v) in IntTypes:
                 return '0x%x' % v
             else:
                 return repr(v)
