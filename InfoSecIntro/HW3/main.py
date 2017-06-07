@@ -1,6 +1,7 @@
 import binascii
 import cmd
 import logging
+import os
 import sys
 
 from rsa import RSA, RSAKey
@@ -64,7 +65,7 @@ class InteractiveShell(cmd.Cmd):
         set key val
 
         available key:
-            e	public exponent
+            e   public exponent
         """
 
         try:
@@ -83,7 +84,7 @@ class InteractiveShell(cmd.Cmd):
         get key
 
         available key:
-            e	public exponent
+            e   public exponent
         """
 
         if not key:
@@ -91,6 +92,9 @@ class InteractiveShell(cmd.Cmd):
             return
 
         print('%s: %r' % (key, self.config.get(key, None)))
+
+    def complete_enc(self, *args):
+        return self.complete_filename(*args)
 
     def do_enc(self, file):
         """
@@ -113,6 +117,9 @@ class InteractiveShell(cmd.Cmd):
 
         print('Source data: %r...' % data[:256])
         print('Encrypted: %r...' % enhex(c[:256]))
+
+    def complete_dec(self, *args):
+        return self.complete_filename(*args)
 
     def do_dec(self, file):
         """
@@ -193,6 +200,22 @@ class InteractiveShell(cmd.Cmd):
         else:
             print(enhex(self.last) if type(self.last) is Bytes else self.last)
 
+    def do_dumpstr(self, line):
+        """
+        dumpstr
+
+        print last result as string
+        """
+
+        if not self.last:
+            print('Nothing in last result')
+            return
+        else:
+            print(repr(self.last))
+
+    def complete_loadkey(self, *args):
+        return self.complete_filename(*args)
+
     def do_loadkey(self, file):
         """
         loadkey [file]
@@ -219,6 +242,28 @@ class InteractiveShell(cmd.Cmd):
         self.setkey(key)
         print('Key loaded')
 
+    def complete_filename(self, text, line, begidx, endidx):
+        arg = line.split()[1:]
+
+        if not arg:
+            completions = os.listdir('./')
+        else:
+            dirname, part, base = arg[-1].rpartition('/')
+            if part == '':
+                dirname = './'
+            elif dirname == '':
+                dirname = '/'
+
+            completions = []
+            for f in os.listdir(dirname):
+                if f.startswith(base):
+                    if os.path.isfile(os.path.join(dirname,f)):
+                        completions.append(f)
+                    else:
+                        completions.append(f+'/')
+
+        return completions
+
     def do_dumpkey(self, file):
         """
         dumpkey [file]
@@ -230,6 +275,7 @@ class InteractiveShell(cmd.Cmd):
             try:
                 data = self.key.to_json()
                 open(file, 'w').write(data)
+                print('Key dumped to file %s' % file)
             except:
                 print('Can not dump key to file')
         else:
