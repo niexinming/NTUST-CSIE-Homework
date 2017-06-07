@@ -189,6 +189,7 @@ class RSA(object):
             msg = bytes2int(ensure_bytes(msg))
 
         if self.key._can_crt:
+            logger.info('CRT optimize are used')
             return self._crt_decrypt(msg)
         else:
             return fpow(msg, self.key.d, self.key.N)
