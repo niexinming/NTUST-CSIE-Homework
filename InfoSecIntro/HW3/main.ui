@@ -66,6 +66,7 @@
             </child>
             <child>
               <object class="ttk.Button" id="btnLoadKey">
+                <property name="command">loadkey</property>
                 <property name="text" translatable="yes">Load Key</property>
                 <layout>
                   <property name="column">3</property>
@@ -76,6 +77,7 @@
             </child>
             <child>
               <object class="ttk.Button" id="btnDumpKey">
+                <property name="command">savekey</property>
                 <property name="text" translatable="yes">Save Key</property>
                 <layout>
                   <property name="column">4</property>

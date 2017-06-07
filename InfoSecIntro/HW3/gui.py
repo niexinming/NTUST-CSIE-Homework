@@ -51,6 +51,22 @@ class App(object):
 
         self.setkey(RSAKey(bits=sz))
 
+    def savekey(self):
+        try:
+            with filedialog.asksaveasfile('w') as fout:
+                fout.write(self.key.to_json())
+                messagebox.showinfo('File Saved', 'File saved to %s' % fout.name)
+        except:
+            messagebox.showwarning('Failed Saving Error', 'Can not save file')
+
+    def loadkey(self):
+        try:
+            with filedialog.askopenfile('r') as fin:
+                self.setkey(RSAKey.from_json(fin.read()))
+                messagebox.showinfo('Key Loaded', 'RSA Keypair loaded from %s' % fin.name)
+        except:
+            messagebox.showwarning('File Loading Error', 'Can not load file')
+
     @property
     def data(self):
         return self.datatxt.get('@0,0', 'end')[:-1]
