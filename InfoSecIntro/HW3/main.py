@@ -172,6 +172,16 @@ class InteractiveShell(cmd.Cmd):
         except KeyboardInterrupt:
             print('Canceld')
 
+    def do_simplify(self, line):
+        """
+        simplify
+
+        strip unnecessary fields of RSAKey.
+            (this operation will disable CRT decryption optimize)
+        """
+
+        self.setkey(self.key.simplify())
+
     def do_prime(self, bits):
         """
         prime bits
