@@ -1,7 +1,7 @@
+import binascii
 import cmd
 import logging
 import sys
-import binascii
 
 from rsa import RSA, RSAKey
 import prime
