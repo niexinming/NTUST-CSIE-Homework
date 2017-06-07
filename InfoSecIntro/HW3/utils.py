@@ -71,8 +71,8 @@ if __name__ == '__main__':
     from timeit import timeit
 
     N = 30000
-    t1 = timeit('fpow(9487, 5566, 7788)', number=N, globals=globals())
-    t2 = timeit('pow (9487, 5566, 7788)', number=N)
+    t1 = timeit(lambda: fpow(9487, 5566, 7788), number=N)
+    t2 = timeit(lambda: pow (9487, 5566, 7788), number=N)
 
     print('[*] running pow and fpow %d times...' % N)
     print('')
