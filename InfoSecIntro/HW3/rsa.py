@@ -179,7 +179,7 @@ class RSA(object):
 
         return fpow(msg, self.key.e, self.key.N)
 
-    def decrypt(self, msg):
+    def decrypt(self, msg, useCRT=False):
         """
         msg     little-endian ordered bytes or int
         """
@@ -189,8 +189,9 @@ class RSA(object):
             msg = bytes2int(ensure_bytes(msg))
 
         if self.key._can_crt:
-            logger.info('CRT optimize are used')
             return self._crt_decrypt(msg)
+        elif useCRT:
+            raise Exception('CRT optimize not available for this key object')
         else:
             return fpow(msg, self.key.d, self.key.N)
 
@@ -203,7 +204,7 @@ class RSA(object):
     def encrypt_block(self, msg):
         return int2bytes(self.encrypt(msg), self.key.block_size)
 
-    def decrypt_block(self, msg):
+    def decrypt_block(self, msg, useCRT=False):
         return int2bytes(self.decrypt(msg), self.key.block_size - 1)
 
     def encrypt_data(self, data):
@@ -212,9 +213,13 @@ class RSA(object):
         return b''.join(self.encrypt_block(block) for block in data_stream)
 
     def decrypt_data(self, data):
+        useCRT = self.key._can_crt
+        if useCRT:
+            logger.info('CRT optimize are used')
+
         bs = self.key.block_size
         data_stream = (data[i:i+bs] for i in range(0, len(data), bs))
-        return b''.join(self.decrypt_block(block)[:bs-1] for block in data_stream).rstrip(b'\x00')
+        return b''.join(self.decrypt_block(block, useCRT)[:bs-1] for block in data_stream).rstrip(b'\x00')
 
 def random_str(l):
     import os

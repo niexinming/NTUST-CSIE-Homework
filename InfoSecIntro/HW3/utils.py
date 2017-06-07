@@ -2,10 +2,12 @@ __all__ = [
     'pyversion',
     'egcd', 'modinv', 'fpow',
     'Str', 'Bytes', 'IntTypes',
-    'bytes2int', 'int2bytes', 'ensure_bytes'
+    'bytes2int', 'int2bytes', 'ensure_bytes',
+    'profile'
 ]
 
 import sys
+import time
 
 try: # python 2/3 compatability
     pyversion = 2
@@ -64,6 +66,14 @@ def fpow(a, m, n):
         a = (a * a) % n
     return v
 
+
+def profile(f, args=None):
+    t = time.time()
+    if not args:
+        args = []
+    r = f(*args)
+    e = time.time()
+    return e-t, r
 
 if __name__ == '__main__':
     print('[*] testing fpow')

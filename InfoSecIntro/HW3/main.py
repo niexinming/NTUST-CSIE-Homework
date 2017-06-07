@@ -142,9 +142,10 @@ class InteractiveShell(cmd.Cmd):
                 print('Can not open file %r' % file)
                 return
 
-        m = self.cipher.decrypt_data(data)
+        t, m = profile(lambda: self.cipher.decrypt_data(data))
         self.last = m
 
+        print('%g ms used' % (t * 1000))
         print('Source data: %r...' % data[:256])
         print('Decrypted: %r...' % m[:256])
 
