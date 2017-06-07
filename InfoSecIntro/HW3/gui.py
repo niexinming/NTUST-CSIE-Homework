@@ -45,8 +45,8 @@ class App(object):
         except ValueError:
             messagebox.showwarning('Input Error', 'Not a number')
 
-        if sz not in range(768, 8193):
-            messagebox.showwarning('Out of bound', 'Key size must between [768, 8192]')
+        if sz not in range(512, 8193):
+            messagebox.showwarning('Out of bound', 'Key size must between [512, 8192]')
             return
 
         self.setkey(RSAKey(bits=sz))

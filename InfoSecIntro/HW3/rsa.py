@@ -77,7 +77,7 @@ class RSAKey(object):
         """
         generate keypair (p, q)
         """
-        assert bits >= 768, 'key length must be at least 768 bits'
+        assert bits >= 512, 'key length must be at least 512 bits'
         l = bits >> 1
 
         logger.info('generating p...')
