@@ -74,6 +74,9 @@ class RSAKey(object):
             self.e = 0x10001
 
     def gen_pq(self, bits):
+        """
+        generate keypair (p, q)
+        """
         assert bits >= 768, 'key length must be at least 768 bits'
         l = bits >> 1
 
@@ -118,12 +121,21 @@ class RSAKey(object):
         return 'RSAKey(%s)' % ', '.join('%s=%s' % (k, hex_or_none(getattr(self, k, None))) for k in self.KEYS)
 
     def as_dict(self):
+        """
+        dump this key object as dict object
+        """
         return { k: hex_or_none(getattr(self, k, None)) for k in self.KEYS }
 
     def to_json(self):
+        """
+        dump this key object as JSON
+        """
         return json.dumps(self.as_dict())
 
     def dump(self):
+        """
+        print fields of this key object to stdout
+        """
         def pref_generator(headline):
             yield headline
             prefspc = ' ' * len(headline)
@@ -141,6 +153,12 @@ class RSAKey(object):
         for attr in self.KEYS:
             dump_attr(attr)
         print('}')
+
+    def simplify(self):
+        """
+        return simplified RSAKey object (only {N, e, d} fields)
+        """
+        return RSAKey(N=self.N, e=self.e, d=self.d)
 
 
 class RSA(object):
