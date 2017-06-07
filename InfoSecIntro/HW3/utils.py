@@ -1,23 +1,28 @@
 __all__ = [
+    'pyversion',
     'egcd', 'modinv', 'fpow',
     'Str', 'Bytes', 'IntTypes',
     'bytes2int', 'int2bytes', 'ensure_bytes'
 ]
 
+import sys
+
 try: # python 2/3 compatability
-    "python2"
+    pyversion = 2
     Str, Bytes, IntTypes = unicode, str, (int, long)
     def bytes2int(b):
         return int(ensure_bytes(b)[::-1].encode('hex'), 16)
     def int2bytes(b, sz):
         return ('%x' % b).zfill(sz * 2).decode('hex')[::-1]
 except:
-    "python3"
+    pyversion = 3
     Str, Bytes, IntTypes = str, bytes, (int,)
     def bytes2int(b):
         return int.from_bytes(ensure_bytes(b), 'little')
     def int2bytes(b, sz):
         return b.to_bytes(sz, 'little')
+
+assert sys.version_info.major == pyversion
 
 def ensure_bytes(s):
     if type(s) is Str:
