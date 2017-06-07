@@ -21,6 +21,9 @@ def unhex(s):
     return binascii.unhexlify(s)
 
 class InteractiveShell(cmd.Cmd):
+    intro = '\n  type `exit` or `q` to exit (or Ctrl-D in UNIX environment, Ctrl-Z in Windows)\n  type `help` or `?` to see usage\n'
+    prompt = 'RSA > '
+
     def __init__(self):
         cmd.Cmd.__init__(self)
 
@@ -51,6 +54,9 @@ class InteractiveShell(cmd.Cmd):
         return True
 
     def do_EOF(self, line):
+        """
+        quit
+        """
         return True
 
     def do_set(self, line):
