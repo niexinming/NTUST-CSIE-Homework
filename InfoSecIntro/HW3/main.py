@@ -1,4 +1,3 @@
-import binascii
 import cmd
 import logging
 import os
@@ -14,12 +13,6 @@ try: # python2
     input = raw_input
 except: # python3
     input = input
-
-def enhex(s):
-    return binascii.hexlify(s)
-
-def unhex(s):
-    return binascii.unhexlify(s)
 
 class InteractiveShell(cmd.Cmd):
     intro = '\n  type `exit` or `q` to exit (or Ctrl-D in UNIX environment, Ctrl-Z in Windows)\n  type `help` or `?` to see usage\n'

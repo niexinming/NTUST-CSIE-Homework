@@ -2,10 +2,13 @@ __all__ = [
     'pyversion',
     'egcd', 'modinv', 'fpow',
     'Str', 'Bytes', 'IntTypes',
-    'bytes2int', 'int2bytes', 'ensure_bytes',
-    'profile'
+    'bytes2int', 'int2bytes',
+    'ensure_bytes', 'ensure_str',
+    'profile',
+    'enhex', 'unhex'
 ]
 
+import binascii
 import sys
 import time
 
@@ -37,6 +40,14 @@ def ensure_bytes(s):
         return s.encode('utf-8')
     elif type(s) in (Bytes, bytearray):
         return Bytes(s)
+    else:
+        raise TypeError
+
+def ensure_str(s):
+    if type(s) is Str:
+        return s
+    elif type(s) in (Bytes, bytearray):
+        return Bytes(s).decode('utf-8')
     else:
         raise TypeError
 
@@ -80,6 +91,12 @@ def profile(f, args=None):
     r = f(*args)
     e = time.time()
     return e-t, r
+
+def enhex(s):
+    return binascii.hexlify(s)
+
+def unhex(s):
+    return binascii.unhexlify(s)
 
 if __name__ == '__main__':
     print('[*] testing fpow')
