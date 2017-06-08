@@ -378,6 +378,7 @@ void yyerror(const char *errmsg)
 {
     has_error = 1;
     printf("ERR (%d, %d): %s\n", linenum, colnum, errmsg);
+    exit(1);
 }
 
 int main()

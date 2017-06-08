@@ -3,7 +3,29 @@
 #include <assert.h>
 #include "ast.h"
 
+#define AST_INDENT_SIZE 2
+
+int ast_indent_size = 0;
+
 void yyerror(const char *errmsg);
+
+void ast_indent()
+{
+	ast_indent_size += AST_INDENT_SIZE;
+}
+
+void ast_unindent()
+{
+	ast_indent_size -= AST_INDENT_SIZE;
+}
+
+void ast_pindent()
+{
+	int i;
+	for(i = 0; i < ast_indent_size; i++) {
+		putchar(' ');
+	}
+}
 
 const struct AST_NODE_s NODE_CONST_STR_BR = {
 	NULL, // next
@@ -127,13 +149,18 @@ void ast_dump_var(const AST_VAR* var)
     if(var->array_size) {
         printf(", ArraySize=%d", var->array_size);
     }
-    printf(")>\n");
+    printf(")>");
 }
 
 AST_NODE* ast_create_var_node(int data_type, int var_type,
 		unsigned int array_size, SYMTAB_ENTRY *symbol,
 		struct AST_VALUE_s * default_val)
 {
+	if(default_val && data_type != default_val->data_type) {
+		yyerror("Data type mismatch for var/const declaration");
+		return NULL;
+	}
+
 	AST_NODE *node = ast_create_node(VAR_DECL);
     AST_VAR *var = &node->var;
 
@@ -143,7 +170,7 @@ AST_NODE* ast_create_var_node(int data_type, int var_type,
     var->symbol = symbol;
     var->val = default_val;
 
-    ast_dump_var(var);
+    // ast_dump_var(var); putchar('\n');
     return node;
 }
 
@@ -153,14 +180,19 @@ AST_NODE* ast_create_func_node(SYMTAB_ENTRY *symbol, int return_type,
 	AST_NODE *node = ast_create_node(FUNC_DECL);
 	AST_FUNC *func = &node->func;
 
+	if(!params) {
+		params = NO_NODE;
+	}
+
 	func->symbol = symbol;
 	func->return_type = return_type;
 	func->params = params;
 	func->param_count = ast_node_length(params);
 	func->body = body;
 
-	printf("<FUNC(Name=%s, Type=%s, ParamCount=%d)>\n", symbol->name,
-			ast_get_type_name(return_type), func->param_count);
+	ast_dump_stmt(node);
+//	printf("<FUNC(Name=%s, Type=%s, ParamCount=%d)>\n", symbol->name,
+//			ast_get_type_name(return_type), func->param_count);
 	return node;
 }
 
@@ -188,6 +220,218 @@ int ast_is_non_void_type(int t)
 			return 1;
 	}
 	return 0;
+}
+
+void ast_dump_str(const char *str)
+{
+	putchar('"');
+	while(*str) {
+		switch(*str) {
+			case '"':
+				printf("\\\"");
+				break;
+			case '\n':
+				printf("\\n");
+				break;
+			default:
+				putchar(*str);
+		}
+		str++;
+	}
+	putchar('"');
+}
+
+void ast_dump_const_val(const AST_VALUE *val)
+{
+	switch(val->data_type) {
+		case INT:
+			printf("<CONST(Type=INT, VAL=%d)>", val->integer);
+			break;
+		case BOOL:
+			printf("<CONST(Type=BOOL, VAL=%s)>", val->integer ? "TRUE" : "FALSE");
+			break;
+		case STRING:
+			printf("<CONST(Type=STRING, VAL=");
+			ast_dump_str(val->string);
+			printf(")>");
+			break;
+		case REAL:
+			printf("<CONST(Type=REAL, VAL=%lg)>", val->real);
+			break;
+		default:
+			printf("<CONST(Type=?)>");
+	}
+}
+
+void ast_dump_func_call(const AST_INVOKE *invoke)
+{
+	printf("<CALL(FUNC=%s, ARGS=[", invoke->func->symbol->name);
+	const AST_NODE *arg = invoke->args;
+	for(int i = invoke->args_count - 1; i >= 0; i--) {
+		if(arg == NULL) { yyerror("missing arg"); assert(NULL); }
+
+		ast_dump_expr(arg);
+		printf("%s", i ? ", " : "])>");
+
+		arg = arg->next;
+	}
+}
+
+void ast_dump_expr(const AST_NODE *node)
+{
+	switch(node->type) {
+		case CONST_VAL:
+			ast_dump_const_val(&node->val);
+			break;
+		case VAR_DECL:
+			printf("<REF(Name=%s)>", node->var.symbol->name);
+			break;
+		case FUNC_CALL:
+			ast_dump_func_call(&node->invoke);
+			break;
+		case EXPR_UNARY:
+			printf("( %s ", ast_get_op_str(node->expr.op));
+			ast_dump_expr(node->expr.lval);
+			printf(" )");
+			break;
+		case EXPR_BINARY:
+			printf("( ");
+			ast_dump_expr(node->expr.lval);
+			printf(" %s ", ast_get_op_str(node->expr.op));
+			ast_dump_expr(node->expr.rval);
+			printf(" )");
+			break;
+		default:
+			assert(NULL); // not a expr node
+	}
+}
+
+void ast_dump_stmt_body(const AST_NODE *p)
+{
+	while(p && p != NO_NODE) {
+		ast_pindent();
+		ast_dump_stmt(p);
+		putchar('\n');
+		p = p->next;
+	}
+}
+
+void ast_dump_func(const AST_NODE *stmt)
+{
+	assert(stmt && stmt->type == FUNC_DECL);
+
+	const AST_FUNC *func = &stmt->func;
+	const AST_NODE *param = func->params;
+
+	printf("<FUNC(Name=%s", func->symbol->name);
+	if(func->param_count) {
+		printf(", Params=[\n");
+		for(int i = func->param_count - 1; i >= 0; i--) {
+			assert(param);
+			ast_pindent();
+			ast_dump_var(&param->var);
+			printf("%s", i ? ",\n" : "\n]");
+			param = param->next;
+		}
+	} else {
+		printf(", NoParams");
+	}
+
+	printf(", Body={\n");
+	ast_indent();
+	ast_dump_stmt_body(func->body);
+	ast_unindent();
+	printf("}>\n");
+}
+
+void ast_dump_assign(const AST_ASSIGN *assign)
+{
+	printf("<ASSIGN(TARGET=%s, VAL=", assign->lval->symbol->name);
+	ast_dump_expr(assign->rval);
+	printf(">");
+}
+
+void ast_dump_if_stmt(const AST_NODE *stmt)
+{
+	assert(stmt->type == IF_STMT);
+
+	printf("<IF(Cond=");
+	ast_dump_expr(stmt->if_stmt.cond);
+	printf(", TRUE={\n");
+
+	ast_indent();
+	ast_dump_stmt_body(stmt->if_stmt.true_stmt);
+	ast_unindent();
+
+	const AST_NODE *F = stmt->if_stmt.false_stmt;
+	if(F && F != NO_NODE) {
+		ast_pindent();
+		printf("}, FALSE={\n");
+		ast_indent();
+		ast_dump_stmt_body(F);
+		ast_unindent();
+	}
+
+	ast_pindent();
+	printf("}>");
+}
+
+void ast_dump_for_stmt(const AST_NODE *stmt)
+{
+	const AST_FOR *f = &stmt->for_stmt;
+
+	printf("<FOR(Init=");
+	ast_dump_stmt(f->init);
+	printf(", Cond=");
+	ast_dump_expr(f->cond);
+	printf(", Increment=");
+	ast_dump_stmt(f->increment);
+	printf(", Body={\n");
+	ast_indent();
+	ast_dump_stmt_body(f->body);
+	ast_unindent();
+	ast_pindent();
+	printf("}>");
+}
+
+void ast_dump_stmt(const AST_NODE *stmt)
+{
+	if(stmt == NO_NODE) {
+		printf("<NONE>");
+		return;
+	}
+	switch(stmt->type) {
+		case VAR_DECL:
+			ast_dump_var(&stmt->var);
+			break;
+		case FUNC_DECL:
+			ast_dump_func(stmt);
+			break;
+		case ASSIGN_STMT:
+			ast_dump_assign(&stmt->assignment);
+			break;
+		case PRINT_STMT:
+			printf("<PRINT(Val=");
+			ast_dump_expr(stmt->child);
+			printf(")>");
+			break;
+		case READ_STMT:
+			printf("<READ(Var=");
+			ast_dump_var(&stmt->child->var);
+			printf(")>");
+			break;
+		case RETURN_STMT:
+			printf("<RETURN(Val=");
+			ast_dump_expr(stmt->child);
+			printf(")>");
+			break;
+		case IF_STMT:
+			ast_dump_if_stmt(stmt);
+			break;
+		case FOR_STMT:
+			ast_dump_for_stmt(stmt);
+			break;
+	}
 }
 
 AST_NODE* ast_create_expr_node(const AST_NODE *l, int op, const AST_NODE *r)
@@ -359,6 +603,7 @@ AST_NODE* ast_create_assign(AST_NODE *var_node, int idx, int op, AST_NODE *rval)
 	AST_NODE *node = ast_create_node(ASSIGN_STMT);
 	node->assignment.lval = &var_node->var;
 	node->assignment.rval = rval;
+
 	return node;
 }
 
