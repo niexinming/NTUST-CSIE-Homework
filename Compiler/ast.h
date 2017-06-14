@@ -98,6 +98,7 @@ typedef struct AST_FOR_s {
 // basic ast node
 typedef struct AST_NODE_s {
 	struct AST_NODE_s       *next;
+	struct AST_NODE_s       *next_stmt;
 	enum AST_TYPE           type;
 	union {
 		struct AST_VALUE_s  val;

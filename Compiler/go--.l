@@ -14,7 +14,7 @@
 #define tokenString(t, s)      { LIST; if(DETAIL_LOG) token_dump_string(s); yylval.string = s; return t; }
 #define tokenIdentifier(t, id) { LIST; PRINTF("<id:%s>\n", id); yylval.string = strdup(id); return t; }
 
-#define dumpline { printf(" | %4d: %s", linenum, buf); linenum++; colnum = 0; buf[0] = '\0'; }
+#define dumpline // { printf(" | %4d: %s", linenum, buf); linenum++; colnum = 0; buf[0] = '\0'; }
 
 #define MAX_LINE_LENG 65536
 

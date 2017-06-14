@@ -5,6 +5,7 @@
 #include "symtab.h"
 #include "ast.h"
 #include "scanner.c"
+#include "codegen.h"
 
 int has_error = 0;
 char err_msg_buf[1024];
@@ -12,17 +13,19 @@ char err_msg_buf[1024];
 void yyerror(const char *errmsg);
 #define yyerrorf(...) sprintf(err_msg_buf, __VA_ARGS__); yyerror(err_msg_buf);
 
-#define trace(...) printf("TRACE: "); printf(__VA_ARGS__); putchar(0x0a)
+#define trace(...) ; /*printf("TRACE: "); printf(__VA_ARGS__); putchar(0x0a) */
 
 SYMTAB *symtab, *root_symtab;
+
+AST_NODE *prog = NO_NODE;
 
 void begin_context() {
     symtab = symtab_create(symtab);
 }
 
 void end_context() {
-    symtab_dump(symtab);
-    symtab = symtab_destroy(symtab);
+    //symtab_dump(symtab);
+    //symtab = symtab_destroy(symtab);
 }
 
 %}
@@ -82,6 +85,8 @@ void end_context() {
 %left BITWISE_NOT
 
 %nonassoc ASSIGN ASSIGN_ADD ASSIGN_SUB ASSIGN_MUL ASSIGN_DIV ASSIGN_MOD ASSIGN_XOR
+
+%type <ast_node> program;
 
 %type <symbol> id;
 %type <ast_node> id_eval;
@@ -174,7 +179,7 @@ const_value : CONST_INT    { $$ = ast_create_value_node(INT);     $$->val.intege
 /* variables */
 var_decl : VAR id type {
              // data_type, var_type, array_size, symbol, default_val
-             $$ = $2->meta = ast_create_var_node($3.t, VAR, $3.n, $2, NULL);
+             $$ = $2->meta = ast_create_var_node($3.t, VAR, $3.n, $2, NO_NODE);
          }
          | VAR id type ASSIGN const_value
          {
@@ -243,9 +248,8 @@ return_stmt : RETURN { $$ = ast_create_node(RETURN_STMT); }
             | RETURN expr { $$ = ast_create_node(RETURN_STMT); $$->child = $2; }
             ;
 
-invoke_args : expr { $$ = $1; }
+invoke_args : expr { $$ = $1; $$->next = NO_NODE; }
             | expr COMMA invoke_args { $1->next = $3; $$ = $1; }
-            | { $$ = NULL; }
             ;
 
 invoke_stmt : id_eval LEFT_PARENTHESIS invoke_args RIGHT_PARENTHESIS {
@@ -272,8 +276,8 @@ stmt_set : assign      { $$ = $1; trace("assign in stmt"); }
 stmt : stmt_set           { $$ = $1; trace("stmt"); }
      | stmt_set SEMICOLON { $$ = $1; trace("stmt_with_semi"); };
 
-stmts : stmt { $$ = $1; }
-      | stmt stmts { $$ = $1; $1->next = $2; }
+stmts : stmt { $$ = $1; $$->next_stmt = NO_NODE; }
+      | stmt stmts { $$ = $1; $1->next_stmt = $2; }
       ;
 
 /* { ... code ... } */
@@ -339,16 +343,17 @@ for_stmt : FOR LEFT_PARENTHESIS
 /* functions */
 
 func_params_list : id type {
-                     $$ = $1->meta = ast_create_var_node($2.t, PARAM, $2.n, $1, NULL);
+                     $$ = $1->meta = ast_create_var_node($2.t, PARAM, $2.n, $1, NO_NODE);
+                     $$->next = NO_NODE;
                  }
                  | id type COMMA func_params_list {
-                     $$ = $1->meta = ast_create_var_node($2.t, PARAM, $2.n, $1, NULL);
+                     $$ = $1->meta = ast_create_var_node($2.t, PARAM, $2.n, $1, NO_NODE);
                      $$->next = $4;
                  }
                  ;
 
 func_params_def : func_params_list { $$ = $1; }
-              | { $$ = NULL; }
+              | { $$ = NO_NODE; }
               ;
 
 begin_func : LEFT_PARENTHESIS { begin_context(); trace("begin of func"); };
@@ -366,10 +371,10 @@ func_decl :
 
 /* merge them into program */
 /* TODO */
-program : var_decl program
-        | const_decl program
-        | func_decl program
-        |
+program : var_decl program   { $1->next_stmt = $2; $$ = prog = $1; }
+        | const_decl program { $1->next_stmt = $2; $$ = prog = $1; }
+        | func_decl program  { $1->next_stmt = $2; $$ = prog = $1; }
+        | { $$ = NO_NODE; }
         ;
 
 
@@ -381,19 +386,18 @@ void yyerror(const char *errmsg)
     exit(1);
 }
 
-int main()
+int main(int argc, char *argv[])
 {
 	symtab = root_symtab = symtab_create(NULL);
 
+    if(argc >= 2) {
+        freopen(argv[1], "r", stdin);
+    }
+
 	yyparse();
 
-	printf("\n"
-			"  =======================\n"
-			"  == symbol table dump ==\n"
-			"  =======================\n"
-			"\n");
+    codegen(prog);
 
-	symtab_dump(root_symtab);
 	symtab_destroy(root_symtab);
 }
 

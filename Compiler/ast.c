@@ -4,6 +4,7 @@
 #include "ast.h"
 
 #define AST_INDENT_SIZE 2
+#define CASE_STR(X) case X: return #X;
 
 int ast_indent_size = 0;
 
@@ -29,6 +30,7 @@ void ast_pindent()
 
 const struct AST_NODE_s NODE_CONST_STR_BR = {
 	NULL, // next
+	NULL, // next_stmt
 	CONST_VAL, // type
 	{
 		.val = {
@@ -89,25 +91,39 @@ const char * ast_get_op_str(int op)
 	return NULL;
 }
 
+const char * ast_get_node_type(enum AST_TYPE t)
+{
+	switch (t) {
+		CASE_STR(CONST_VAL)
+		CASE_STR(VAR_DECL)
+		CASE_STR(FUNC_DECL)
+		CASE_STR(FUNC_CALL)
+		CASE_STR(ASSIGN_STMT)
+		CASE_STR(PRINT_STMT)
+		CASE_STR(READ_STMT)
+		CASE_STR(RETURN_STMT)
+		CASE_STR(IF_STMT)
+		CASE_STR(FOR_STMT)
+		CASE_STR(EXPR_UNARY)
+		CASE_STR(EXPR_BINARY)
+	}
+	return NULL;
+}
+
 AST_NODE* ast_create_node(enum AST_TYPE type)
 {
 	AST_NODE *ast_node = malloc(sizeof(AST_NODE));
 	ast_node->next = NULL;
 	ast_node->type = type;
-	ast_node->child = NULL;
+	ast_node->child = NO_NODE;
 	return ast_node;
 }
 
 unsigned int ast_node_length(AST_NODE *node)
 {
-	if(node == NULL) {
-		return -1;
-	}
-	if(node == NO_NODE) {
-		return 0;
-	}
+	assert(node);
 	unsigned int d = 0;
-	while(node) {
+	while(node != NO_NODE) {
 		d++;
 		node = node->next;
 	}
@@ -123,10 +139,7 @@ AST_NODE* ast_create_value_node(int type)
 
 void ast_dump_var(const AST_VAR* var)
 {
-	if(var == NULL) {
-		puts("<ERROR(var is null)>");
-		return;
-	}
+	assert(var);
 
 	if(var == NO_NODE) {
 		puts("<VAR(NO_NODE)>");
@@ -136,7 +149,7 @@ void ast_dump_var(const AST_VAR* var)
     const char *var_type = ast_get_var_type(var->var_type);
     const char *data_type = ast_get_type_name(var->data_type);
     printf("<%s(Name=%s, Type=%s", var_type, var->symbol->name, data_type);
-    if(var->val) {
+    if(var->val != NO_NODE) {
         printf(", DefaultValue=");
         switch (var->data_type) {
             case VOID: printf("VOID"); break;
@@ -156,7 +169,8 @@ AST_NODE* ast_create_var_node(int data_type, int var_type,
 		unsigned int array_size, SYMTAB_ENTRY *symbol,
 		struct AST_VALUE_s * default_val)
 {
-	if(default_val && data_type != default_val->data_type) {
+	assert(symbol && default_val);
+	if(default_val != NO_NODE && data_type != default_val->data_type) {
 		yyerror("Data type mismatch for var/const declaration");
 		return NULL;
 	}
@@ -170,7 +184,6 @@ AST_NODE* ast_create_var_node(int data_type, int var_type,
     var->symbol = symbol;
     var->val = default_val;
 
-    // ast_dump_var(var); putchar('\n');
     return node;
 }
 
@@ -190,9 +203,6 @@ AST_NODE* ast_create_func_node(SYMTAB_ENTRY *symbol, int return_type,
 	func->param_count = ast_node_length(params);
 	func->body = body;
 
-	ast_dump_stmt(node);
-//	printf("<FUNC(Name=%s, Type=%s, ParamCount=%d)>\n", symbol->name,
-//			ast_get_type_name(return_type), func->param_count);
 	return node;
 }
 
@@ -205,8 +215,6 @@ AST_NODE* ast_create_invoke_node(AST_FUNC *func, AST_NODE *args)
 	invoke->args = args;
 	invoke->args_count = ast_node_length(args);
 
-	printf("<INVOKE(Func=%s, ParamCount=%d)>\n", func->symbol->name,
-			invoke->args_count);
 	return node;
 }
 
@@ -243,6 +251,7 @@ void ast_dump_str(const char *str)
 
 void ast_dump_const_val(const AST_VALUE *val)
 {
+	assert(val);
 	switch(val->data_type) {
 		case INT:
 			printf("<CONST(Type=INT, VAL=%d)>", val->integer);
@@ -265,6 +274,7 @@ void ast_dump_const_val(const AST_VALUE *val)
 
 void ast_dump_func_call(const AST_INVOKE *invoke)
 {
+	assert(invoke);
 	printf("<CALL(FUNC=%s, ARGS=[", invoke->func->symbol->name);
 	const AST_NODE *arg = invoke->args;
 	for(int i = invoke->args_count - 1; i >= 0; i--) {
@@ -279,6 +289,7 @@ void ast_dump_func_call(const AST_INVOKE *invoke)
 
 void ast_dump_expr(const AST_NODE *node)
 {
+	assert(node && node != NO_NODE);
 	switch(node->type) {
 		case CONST_VAL:
 			ast_dump_const_val(&node->val);
@@ -308,11 +319,12 @@ void ast_dump_expr(const AST_NODE *node)
 
 void ast_dump_stmt_body(const AST_NODE *p)
 {
+	assert(p);
 	while(p && p != NO_NODE) {
 		ast_pindent();
 		ast_dump_stmt(p);
 		putchar('\n');
-		p = p->next;
+		p = p->next_stmt;
 	}
 }
 
@@ -346,6 +358,7 @@ void ast_dump_func(const AST_NODE *stmt)
 
 void ast_dump_assign(const AST_ASSIGN *assign)
 {
+	assert(assign);
 	printf("<ASSIGN(TARGET=%s, VAL=", assign->lval->symbol->name);
 	ast_dump_expr(assign->rval);
 	printf(">");
@@ -353,6 +366,7 @@ void ast_dump_assign(const AST_ASSIGN *assign)
 
 void ast_dump_if_stmt(const AST_NODE *stmt)
 {
+	assert(stmt);
 	assert(stmt->type == IF_STMT);
 
 	printf("<IF(Cond=");
@@ -378,6 +392,7 @@ void ast_dump_if_stmt(const AST_NODE *stmt)
 
 void ast_dump_for_stmt(const AST_NODE *stmt)
 {
+	assert(stmt);
 	const AST_FOR *f = &stmt->for_stmt;
 
 	printf("<FOR(Init=");
@@ -396,6 +411,7 @@ void ast_dump_for_stmt(const AST_NODE *stmt)
 
 void ast_dump_stmt(const AST_NODE *stmt)
 {
+	assert(stmt);
 	if(stmt == NO_NODE) {
 		printf("<NONE>");
 		return;
@@ -430,6 +446,15 @@ void ast_dump_stmt(const AST_NODE *stmt)
 			break;
 		case FOR_STMT:
 			ast_dump_for_stmt(stmt);
+			break;
+		case FUNC_CALL:
+			ast_dump_expr(stmt);
+			break;
+		case CONST_VAL:
+		case EXPR_UNARY:
+		case EXPR_BINARY:
+			puts("Invalid statment type");
+			exit(0);
 			break;
 	}
 }
