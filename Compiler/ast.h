@@ -47,6 +47,7 @@ typedef struct AST_VAR_s {
 	int                 data_type;
 	int                 var_type;   // VAR, CONST, PARAM
 	unsigned int        array_size; // zero for non-array variable
+	int                 idx;
 	SYMTAB_ENTRY        *symbol;    // var name
 	struct AST_VALUE_s  *val;       // default value
 } AST_VAR;
