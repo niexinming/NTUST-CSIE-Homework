@@ -250,6 +250,7 @@ return_stmt : RETURN { $$ = ast_create_node(RETURN_STMT); }
 
 invoke_args : expr { $$ = $1; $$->next = NO_NODE; }
             | expr COMMA invoke_args { $1->next = $3; $$ = $1; }
+            | { $$ = NO_NODE; }
             ;
 
 invoke_stmt : id_eval LEFT_PARENTHESIS invoke_args RIGHT_PARENTHESIS {
