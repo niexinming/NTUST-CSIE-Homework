@@ -1,0 +1,9 @@
+#!/bin/bash
+
+echo "[*] Compile to jasm"
+./parser "$1" > prog.jasm
+echo "[*] Run assembler"
+./javaa/javaa prog.jasm
+echo "[*] Execute program"
+shift
+exec java prog "$@"

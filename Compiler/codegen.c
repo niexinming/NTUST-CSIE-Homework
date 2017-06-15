@@ -242,7 +242,7 @@ void emit_if(const AST_IF *ifs)
 	emit_expr(ifs->cond);
 	puts("/* end of if condition */");
 
-	emit_label("ifeq", label, "else");
+	emit_label("ifne", label, "else");
 
 	puts("/* begin true statements */");
 	emit_stmts(ifs->true_stmt);
@@ -265,7 +265,7 @@ void emit_for(const AST_FOR *fors)
 	emit_label_def(label, "beginfor");
 	puts("/* for condition */");
 	emit_expr(fors->cond);
-	emit_label("ifeq", label, "endfor");
+	emit_label("ifne", label, "endfor");
 	puts("");
 
 	puts("/* for body */");

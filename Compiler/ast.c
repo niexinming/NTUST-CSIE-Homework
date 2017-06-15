@@ -626,6 +626,10 @@ AST_NODE* ast_create_assign(AST_NODE *var_node, int idx, int op, AST_NODE *rval)
 		return NULL;
 	}
 
+	if(op != NOP) {
+		rval = ast_create_expr_node(var_node, op, rval);
+	}
+
 	AST_NODE *node = ast_create_node(ASSIGN_STMT);
 	node->assignment.lval = &var_node->var;
 	node->assignment.rval = rval;

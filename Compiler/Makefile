@@ -4,7 +4,7 @@ all:
 	gcc -g parser.c symtab.c tokens.c ast.c codegen.c -ll -ly -o parser
 	./parser testcase/test.go | tee prog.jasm
 	@echo --- run assembler ---
-	./javaa/javaaPortable/javaa prog.jasm
+	./javaa/javaa prog.jasm
 	@echo --- run program ---
 	java prog
 
