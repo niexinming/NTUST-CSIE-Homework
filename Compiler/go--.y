@@ -13,7 +13,7 @@ char err_msg_buf[1024];
 void yyerror(const char *errmsg);
 #define yyerrorf(...) sprintf(err_msg_buf, __VA_ARGS__); yyerror(err_msg_buf);
 
-#define trace(...) ; /*printf("TRACE: "); printf(__VA_ARGS__); putchar(0x0a) */
+#define trace(...) if(getenv("TRACE")) {printf("TRACE: "); printf(__VA_ARGS__); putchar(0x0a);}
 
 SYMTAB *symtab, *root_symtab;
 
@@ -26,6 +26,7 @@ void begin_context() {
 void end_context() {
     //symtab_dump(symtab);
     //symtab = symtab_destroy(symtab);
+    symtab = symtab->parent;
 }
 
 %}
@@ -142,6 +143,8 @@ id : ID {
         yyerror("create symbol failed");
     }
 
+    $$->meta = NO_NODE;
+
     free($1);
 };
 
@@ -254,6 +257,9 @@ invoke_args : expr { $$ = $1; $$->next = NO_NODE; }
             ;
 
 invoke_stmt : id_eval LEFT_PARENTHESIS invoke_args RIGHT_PARENTHESIS {
+                if($1 == NO_NODE) {
+                    yyerror("Recursion not supported");
+                }
                 if($1->type != FUNC_DECL) {
                     yyerrorf("ID: %s is not a function", ast_get_name_of($1));
                     $$ = NULL;
@@ -308,14 +314,14 @@ if_stmt : IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS if_body {
 if_body : block { $$ = $1; }
         | stmt { $$ = $1; };
 
-for_init_stmt : stmt_set { $$ = $1; }
+for_init_stmt : stmt_set { $$ = $1; $$->next_stmt = NO_NODE; }
               | { $$ = NO_NODE; }
               ;
 
 for_cond : expr { $$ = $1; }
          ;
 
-for_inc : stmt_set { $$ = $1; }
+for_inc : stmt_set { $$ = $1; $$->next_stmt = NO_NODE; }
         | { $$ = NO_NODE; }
         ;
 

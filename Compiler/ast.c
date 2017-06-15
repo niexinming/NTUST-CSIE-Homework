@@ -478,7 +478,7 @@ AST_NODE* ast_create_expr_node(const AST_NODE *l, int op, const AST_NODE *r)
 		switch(op) {
 			case LOGICAL_NOT:
 				if(ltype == BOOL) {
-					node = ast_create_node(EXPR_BINARY);
+					node = ast_create_node(EXPR_UNARY);
 					goto success_follow_ltype;
 				}
 				yyerror("data type must be BOOL for LOGICAL NOT");
@@ -486,7 +486,7 @@ AST_NODE* ast_create_expr_node(const AST_NODE *l, int op, const AST_NODE *r)
 
 			case BITWISE_NOT:
 				if(ltype == INT) {
-					node = ast_create_node(EXPR_BINARY);
+					node = ast_create_node(EXPR_UNARY);
 					goto success_follow_ltype;
 				}
 				yyerror("data type must be INT for BITWISE NOT");
