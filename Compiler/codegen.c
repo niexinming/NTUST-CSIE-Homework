@@ -138,9 +138,9 @@ int emit_expr(const AST_NODE *expr)
 
 void emit_invoke(const AST_INVOKE *invoke)
 {
-	AST_FUNC *func = invoke->func;
+	const AST_FUNC *func = invoke->func;
+	const AST_NODE *arg = invoke->args;
 
-	AST_NODE *arg = invoke->args;
 	while(arg != NO_NODE) {
 		emit_expr(arg);
 		arg = arg->next;
