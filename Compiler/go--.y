@@ -289,12 +289,8 @@ end_block : RIGHT_BRACE { end_context(); trace("end of block"); };
 block : begin_block stmts end_block { $$ = $2; };
 
 /* special stmt */
-print_stmt : PRINT expr { $$ = ast_create_node(PRINT_STMT); $$->child = $2; }
-           | PRINTLN expr {
-               $$ = ast_create_node(PRINT_STMT);
-               trace("hack for println");
-               $$->child = ast_create_expr_node($2, ADD, &NODE_CONST_STR_BR);
-           }
+print_stmt : PRINT expr { $$ = ast_create_node(PRINT_STMT); $$->flag = 0; $$->child = $2; }
+           | PRINTLN expr { $$ = ast_create_node(PRINT_STMT); $$->flag = NEWLINE; $$->child = $2; }
            ;
 
 read_stmt : READ id_eval { $$ = ast_create_node(READ_STMT); $$->child = $2; }

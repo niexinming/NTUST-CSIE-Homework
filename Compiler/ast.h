@@ -4,6 +4,8 @@
 #include "symtab.h"
 #include "parser.h"
 
+#define NEWLINE 1
+
 enum AST_TYPE {
 	// literal value
 	CONST_VAL,
@@ -101,6 +103,7 @@ typedef struct AST_NODE_s {
 	struct AST_NODE_s       *next;
 	struct AST_NODE_s       *next_stmt;
 	enum AST_TYPE           type;
+	int                     flag;
 	union {
 		struct AST_VALUE_s  val;
 		struct AST_VAR_s    var;
@@ -116,7 +119,9 @@ typedef struct AST_NODE_s {
 
 #define NO_NODE ((void*)-1)
 
+void ast_dump_str(const char *str);
 const char * ast_get_type_name(int typecode);
+const char * ast_get_node_type(enum AST_TYPE t);
 AST_NODE* ast_create_node(enum AST_TYPE type);
 const char * ast_get_op_str(int op);
 unsigned int ast_node_length(AST_NODE *node);

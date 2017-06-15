@@ -32,6 +32,7 @@ const struct AST_NODE_s NODE_CONST_STR_BR = {
 	NULL, // next
 	NULL, // next_stmt
 	CONST_VAL, // type
+	0, // flag
 	{
 		.val = {
 			STRING,
