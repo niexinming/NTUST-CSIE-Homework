@@ -54,8 +54,8 @@ char* GetLocalVarSigFromSlot(int);
 void copyshort2char(char* myarrayptr, short int myint)
 {
 	int c = 0;
-	myarrayptr[c++] = (char) myint >> 8;
-	myarrayptr[c++] = (char) myint & 0xFF;
+	myarrayptr[c++] = (char) (myint >> 8);
+	myarrayptr[c++] = (char) (myint & 0xFF);
 }
 
 
@@ -68,10 +68,10 @@ void outshort2char(short int myint, FILE* myoutfp)
 void copylong2char(char* myarrayptr, long myint)
 {
 	int c = 0;
-	myarrayptr[c++] = (char) myint >> 24;
-	myarrayptr[c++] = (char) (myint & 0xFFFFFF) >> 16;
-	myarrayptr[c++] = (char) (myint & 0xFFFF) >> 8;
-	myarrayptr[c++] = (char) myint & 0xFF;
+	myarrayptr[c++] = (char) (myint >> 24);
+	myarrayptr[c++] = (char) ((myint & 0xFFFFFF) >> 16);
+	myarrayptr[c++] = (char) ((myint & 0xFFFF) >> 8);
+	myarrayptr[c++] = (char) (myint & 0xFF);
 }
 
 void outlong2char(long myint, FILE* myoutfp)
@@ -128,22 +128,16 @@ void AddToCode(char mychar)
 
 void AddShortToCode(short myshort)
 {
-	currentmethod.Code[currentmethod.CodeCounter++] =
-		(char) myshort >> 8;
-	currentmethod.Code[currentmethod.CodeCounter++] =
-		(char) myshort & 0xFF;
+	currentmethod.Code[currentmethod.CodeCounter++] = (char) (myshort >> 8);
+	currentmethod.Code[currentmethod.CodeCounter++] = (char) (myshort & 0xFF);
 }
 
 void AddLongToCode(long mylong)
 {
-	currentmethod.Code[currentmethod.CodeCounter++] =
-		(char) mylong >> 24;
-	currentmethod.Code[currentmethod.CodeCounter++] =
-		(char)(mylong&0xFFFFFF)>>16;
-	currentmethod.Code[currentmethod.CodeCounter++] =
-		(char)(mylong&0xFFFF)>>8;
-	currentmethod.Code[currentmethod.CodeCounter++] =
-		(char) mylong & 0xFF;
+	currentmethod.Code[currentmethod.CodeCounter++] = (char)( mylong >> 24);
+	currentmethod.Code[currentmethod.CodeCounter++] = (char)((mylong&0xFFFFFF)>>16);
+	currentmethod.Code[currentmethod.CodeCounter++] = (char)((mylong&0xFFFF)>>8);
+	currentmethod.Code[currentmethod.CodeCounter++] = (char)( mylong & 0xFF);
 }
 
 void EnterConstType(int myconsttype, char mybyteval)

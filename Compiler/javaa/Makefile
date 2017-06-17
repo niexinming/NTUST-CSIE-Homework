@@ -4,7 +4,7 @@ CC     = g++
 CFLAGS = $(CCFLAGS)
 
 
-javaa:	gram.o newlex lex.o main.o $(BUILD) Makefile
+javaa:	gram.o lex.o main.o $(BUILD) Makefile
 	$(CC) $(CFLAGS) -o javaa main.o gram.o lex.o $(BUILD)
 
 gram.o:	javaa.y
@@ -26,12 +26,8 @@ $(BUILD):	types.h build.h utils.h listing.h
 
 sem.o:	gram.h
 
-newlex:	beginlex middlelex endlex
-	cat beginlex middlelex endlex > newlex
-	cmp -s newlex javaa.l || cp newlex javaa.l
-
 clean:
-	/bin/rm -f *.o newlex javaa.l
+	/bin/rm -f *.o
 	/bin/rm -f gram.h javaa.tab.h javaa.tab.c lex.yy.c lex.c gram.c
 	/bin/rm -f javaa.output
 
