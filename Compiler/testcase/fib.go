@@ -1,23 +1,24 @@
-/* fib.sc
- *
- * This test program computes the Nth Fibonacci number
- */
+func int fib(x int)
+{
+	if(x <= 2) {
+		return 1
+	} else {
+		return fib(x - 1) + fib(x - 2)
+	}
+}
 
-// variables
-const Fn = 1
-var n int  = 8
-var FNminus1 int = 1
-var temp int
+func void main()
+{
+	println "fib calcualtor"
+	var n int = 0
 
-// compute the nth Fibonacci number
-func void main( ) {
-  for (n > 2; n = n - 1) {
-    temp = Fn
-    Fn = Fn + FNminus1
-    FNminus1 = temp
-  }
+	for(n == -1) {
+		print "Input n>"
+		read n
 
-  /* print result */
-  print "Result of computation: "
-  println n
+		print "fib("
+		print n
+		print ") = "
+		println fib(n)
+	}
 }
