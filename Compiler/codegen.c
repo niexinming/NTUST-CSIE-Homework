@@ -180,8 +180,8 @@ void emit_binary_cond(const char *opcode)
 int emit_binary_expr(const AST_NODE *node)
 {
 	const AST_EXPR *expr = &node->expr;
-	emit_expr(expr->rval);
 	emit_expr(expr->lval);
+	emit_expr(expr->rval);
 	switch(expr->op) {
 		case ADD: puts("iadd"); break;
 		case SUB: puts("isub"); break;
