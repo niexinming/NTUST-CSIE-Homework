@@ -168,6 +168,7 @@ int emit_unary_expr(const AST_NODE *node)
 void emit_binary_cond(const char *opcode)
 {
 	int label = 10 * ++lblid;
+	puts("/* begin binary cond */");
 	puts("isub");
 	emit_label(opcode, label, "cond_true");
 	puts("iconst_0");
@@ -175,6 +176,7 @@ void emit_binary_cond(const char *opcode)
 	emit_label_def(label, "cond_true");
 	puts("iconst_1");
 	emit_label_def(label, "cond_end");
+	puts("/* end binary cond */");
 }
 
 int emit_binary_expr(const AST_NODE *node)
