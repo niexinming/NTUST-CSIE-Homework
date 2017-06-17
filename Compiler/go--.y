@@ -106,6 +106,7 @@ void end_context() {
 
 %type <ast_node> func_params_list;
 %type <ast_node> func_params_def;
+%type <ast_node> func_head;
 %type <ast_node> func_decl;
 
 %type <ast_node> invoke_args;
@@ -356,21 +357,26 @@ func_params_list : id type {
                  ;
 
 func_params_def : func_params_list { $$ = $1; }
-              | { $$ = NO_NODE; }
-              ;
+                | { $$ = NO_NODE; }
+                ;
 
-begin_func : LEFT_PARENTHESIS { begin_context(); trace("begin of func"); };
+func_head :
+          FUNC type id
+          LEFT_PARENTHESIS func_params_def RIGHT_PARENTHESIS {
+              trace("begin of func");
+              begin_context();
+              $$ = $3->meta = ast_create_func_node($3, $2.t, $5, NO_NODE);
+          }
 
 func_decl :
-    FUNC type id begin_func func_params_def RIGHT_PARENTHESIS
-    block {
-        end_context();
-        trace("end of func");
-
-        $$ = $3->meta = ast_create_func_node($3, $2.t, $5, $7);
-        // TODO: check return type
-    }
-    ;
+          func_head block {
+              end_context();
+              $$ = $1;
+              $$->func.body = $2;
+              // TODO: check return type
+              trace("end of func");
+          }
+          ;
 
 /* merge them into program */
 /* TODO */
