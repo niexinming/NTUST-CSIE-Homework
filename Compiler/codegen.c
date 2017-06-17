@@ -10,10 +10,34 @@ const char *JAVA_STRING = "java.lang.String";
 const char *get_type(int typecode)
 {
 	switch(typecode) {
+		case BOOL: return "boolean";
 		case INT: return "int";
+		// case REAL: return "double";
 		case STRING: return JAVA_STRING;
 		case VOID: return "void";
 		default: return "void /* ERROR: unsupported type */";
+	}
+}
+
+const char *op_get(int typecode)
+{
+	switch(typecode) {
+		case BOOL:
+		case INT: return "iload";
+		case REAL: return "dload";
+		case STRING: return "aload";
+		default: return "iload /* ERROR: unsupported type */";
+	}
+}
+
+const char *op_set(int typecode)
+{
+	switch(typecode) {
+		case BOOL:
+		case INT: return "istore";
+		case REAL: return "dstore";
+		case STRING: return "astore";
+		default: return "iload /* ERROR: unsupported type */";
 	}
 }
 
@@ -72,22 +96,12 @@ void emit_local_vars(const AST_NODE *prog, int *i)
 int emit_load_var(const AST_VAR *var)
 {
 	const char *vname = var->symbol->name;
-
 	printf("/* load var %s (%d) */\n", vname, var->idx);
 
-	if(var->idx == -1) {
-		// global variable / constants
-		const char *vtype = get_type(var->data_type);
-		printf("getstatic %s prog.%s\n", vtype, vname);
-	} else {
-		// function arguments or local variable
-		if(var->data_type == INT) {
-			printf("iload %d /* %s */\n", var->idx, vname);
-		} else if(var->data_type == STRING) {
-			printf("aload %d /* %s */\n", var->idx, vname);
-		} else {
-			printf("/* ERROR: var loading unsupported type: %s */\n", ast_get_type_name(var->data_type));
-		}
+	if(var->idx == -1) { // global variable / constants
+		printf("getstatic %s prog.%s\n", get_type(var->data_type), vname);
+	} else { // function arguments or local variable
+		printf("%s %d\n", op_get(var->data_type), var->idx);
 	}
 
 	return var->data_type;
@@ -95,27 +109,13 @@ int emit_load_var(const AST_VAR *var)
 
 void emit_store(const AST_VAR *var)
 {
-	if(var->idx == -1) {
-		// global
-		const char *vtype;
-		if(var->data_type == INT) {
-			vtype = "int";
-		} else if(var->data_type == STRING) {
-			vtype = "java.io.String";
-		} else {
-			printf("/* ERROR: unsupported store data type */\n");
-		}
+	const char *vname = var->symbol->name;
+	printf("/* store var %s (%d) */\n", vname, var->idx);
 
-		printf("putstatic %s prog.%s\n", vtype, var->symbol->name);
-	} else {
-		// local
-		if(var->data_type == INT) {
-			printf("istore %d\n", var->idx);
-		} else if(var->data_type == STRING) {
-			printf("astore %d\n", var->idx);
-		} else {
-			printf("/* ERROR: unsupported store data type */\n");
-		}
+	if(var->idx == -1) { // global
+		printf("putstatic %s prog.%s\n", get_type(var->data_type), vname);
+	} else { // local
+		printf("%s %d\n", op_set(var->data_type), var->idx);
 	}
 }
 
@@ -123,6 +123,8 @@ int emit_val(const AST_VALUE *val)
 {
 	if(val->data_type == INT) {
 		printf("sipush %d\n", val->integer);
+	} else if (val->data_type == BOOL) {
+		printf("iconst_%d\n", val->integer ? 1 : 0);
 	} else if (val->data_type == STRING) {
 		printf("ldc "); ast_dump_str(val->string); putchar('\n');
 	} else {
@@ -133,14 +135,31 @@ int emit_val(const AST_VALUE *val)
 
 int emit_unary_expr(const AST_NODE *node)
 {
+	int label;
 	const AST_EXPR *expr = &node->expr;
+	emit_expr(expr->lval);
+
 	switch(expr->op) {
 		case NEGATIVE:
-			emit_expr(expr->lval);
 			puts("ineg");
 			break;
+		case LOGICAL_NOT:
+			label = 10 * ++lblid;
+			puts("/* begin logical not */");
+			emit_label("ifeq", label, "1");
+			puts("iconst_0");
+			emit_label("goto", label, "end");
+			emit_label_def(label, "1");
+			puts("iconst_1");
+			emit_label_def(label, "end");
+			puts("/* end logical not */");
+			break;
+		case BITWISE_NOT:
+			puts("iconst_m1");
+			puts("ixor");
+			break;
 		default:
-			puts("sipush 0 /* ERROR: unsupported operator */");
+			printf("sipush 0 /* ERROR: unsupported operator: %d */\n", expr->op);
 	}
 
 	return expr->data_type;
@@ -167,14 +186,20 @@ int emit_binary_expr(const AST_NODE *node)
 		case ADD: puts("iadd"); break;
 		case SUB: puts("isub"); break;
 		case DIV: puts("idiv"); break;
+		case MOD: puts("irem"); break;
 		case MUL: puts("imul"); break;
+		case XOR: puts("ixor"); break;
 		case EQ:  emit_binary_cond("ifeq"); break;
 		case NEQ: emit_binary_cond("ifne"); break;
 		case LT:  emit_binary_cond("iflt"); break;
 		case GT:  emit_binary_cond("ifgt"); break;
 		case LTE: emit_binary_cond("ifle"); break;
 		case GTE: emit_binary_cond("ifge"); break;
-		default: puts("iadd /* ERROR: unsupported operator */"); break;
+		case BITWISE_AND:
+		case LOGICAL_AND: puts("iand"); break;
+		case BITWISE_OR:
+		case LOGICAL_OR:  puts("ior"); break;
+		default: printf("iadd /* ERROR: unsupported operator: %d */\n", expr->op); break;
 	}
 	return expr->data_type;
 }
@@ -237,22 +262,31 @@ void emit_label_def(int lblid, const char *subid)
 void emit_if(const AST_IF *ifs)
 {
 	int label = 10 * ++lblid;
+	int has_else_part = ifs->false_stmt != NO_NODE;
 
 	puts("/* begin if condition */");
 	emit_expr(ifs->cond);
 	puts("/* end of if condition */");
 
-	emit_label("ifne", label, "else");
+	emit_label("ifeq", label, "else");
 
 	puts("/* begin true statements */");
 	emit_stmts(ifs->true_stmt);
 	puts("/* end of true statements */");
+	if(has_else_part) {
+		emit_label("goto", label, "end");
+	}
 
 	emit_label_def(label, "else");
 
-	puts("/* begin false statements */");
-	emit_stmts(ifs->false_stmt);
-	puts("/* end of false statements */");
+	if(has_else_part) {
+		puts("/* begin false statements */");
+		emit_stmts(ifs->false_stmt);
+		puts("/* end of false statements */");
+		emit_label_def(label, "end");
+	} else {
+		puts("/* if statement without ELSE part */");
+	}
 }
 
 void emit_for(const AST_FOR *fors)
@@ -285,6 +319,31 @@ void emit_print(const AST_NODE *expr, int flag)
 	puts("getstatic java.io.PrintStream java.lang.System.out");
 	int type = emit_expr(expr);
 	printf("invokevirtual void java.io.PrintStream.%s(%s)\n", fname, get_type(type));
+}
+
+void emit_read(const AST_NODE *expr)
+{
+	if(expr->child->type != VAR_DECL) {
+		printf("/* ERROR: expected a char, got %s */\n", ast_get_node_type(expr->child->type));
+		exit(1);
+	}
+
+	const AST_VAR *var = &expr->child->var;
+
+	switch(var->data_type) {
+		case BOOL:
+		case INT:
+			puts("invokestatic int Reader.readInteger()");
+			break;
+		case REAL:
+			puts("invokestatic double Reader.readDouble()");
+			break;
+		case STRING:
+			printf("invokestatic %s Reader.readLine()\n", JAVA_STRING);
+			break;
+	}
+
+	emit_store(var);
 }
 
 void emit_return(const AST_NODE *expr)
@@ -323,9 +382,8 @@ void emit_stmts(const AST_NODE *stmt)
 			case FOR_STMT:
 				emit_for(&stmt->for_stmt);
 				break;
-
 			case READ_STMT:
-				printf("/* Not implemented stmt: READ */\n");
+				emit_read(stmt);
 				break;
 
 			case VAR_DECL:
