@@ -7,4 +7,5 @@ parser.dSYM
 parser.output
 prog.class
 prog.jasm
+jasm
 *.pdf
