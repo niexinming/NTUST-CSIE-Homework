@@ -1,7 +1,7 @@
 all:
 	lex -o scanner.c go--.l
 	yacc go--.y --output=parser.c --defines=parser.h
-	gcc -g parser.c symtab.c tokens.c ast.c codegen.c -ll -ly -o parser
+	gcc -g -std=c99 parser.c symtab.c tokens.c ast.c codegen.c -ll -ly -o parser
 	./parser testcase/test.go | tee prog.jasm
 	@echo --- run assembler ---
 	./javaa/javaa prog.jasm

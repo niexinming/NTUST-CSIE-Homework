@@ -7,6 +7,10 @@
 #define PRINTF(FMT, ...)
 #endif
 
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+
 #define LIST                   { strcat(buf, yytext); colnum += strlen(yytext); }
 #define token(t)               { LIST; if(DETAIL_LOG) token_pretty_print(t, (#t)); return t; }
 #define tokenInteger(t, i)     { LIST; PRINTF("<int:%s>\n", i); yylval.integer = atoi(i); return t; }

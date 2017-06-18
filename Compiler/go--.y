@@ -1,6 +1,9 @@
 %{
+#define _BSD_SOURCE // for strdup on gcc 4.8.4
+#define _POSIX_SOURCE // for fileno
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "symtab.h"
 #include "ast.h"
