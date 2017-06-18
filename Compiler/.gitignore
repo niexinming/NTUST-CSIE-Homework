@@ -5,4 +5,6 @@ parser.c
 parser.h
 parser.dSYM
 parser.output
+prog.class
+prog.jasm
 *.pdf
