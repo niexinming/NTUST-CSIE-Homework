@@ -79,14 +79,6 @@ void emit_local_vars(const AST_NODE *prog, int *i)
 			AST_VAR *var = (AST_VAR *)&prog->var;
 			printf("/* local var: %s, %d */\n", var->symbol->name, *i);
 			var->idx = (*i)++;
-
-			if(var->val == NO_NODE) {
-				printf("/* var#%-2d %s has no val */\n", var->idx, var->symbol->name);
-			} else {
-				printf("/* var#%-2d %s has val */\n", var->idx, var->symbol->name);
-				emit_val(var->val);
-				emit_store(var);
-			}
 		} else if(prog->type == FOR_STMT) {
 			emit_local_vars(prog->for_stmt.init, i);
 			emit_local_vars(prog->for_stmt.body, i);
@@ -400,8 +392,18 @@ void emit_stmts(const AST_NODE *stmt)
 			case READ_STMT:
 				emit_read(stmt);
 				break;
-
 			case VAR_DECL:
+				{
+					const AST_VAR *var = &stmt->var;
+
+					if(var->val == NO_NODE) {
+						printf("/* var#%-2d %s has no val */\n", var->idx, var->symbol->name);
+					} else {
+						printf("/* var#%-2d %s has val */\n", var->idx, var->symbol->name);
+						emit_val(var->val);
+						emit_store(var);
+					}
+				}
 				break;
 
 			case CONST_VAL:
