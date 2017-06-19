@@ -72,7 +72,7 @@ void emit_global_vars(AST_NODE *prog)
 	}
 }
 
-void emit_local_vars(const AST_NODE *prog, int *i)
+void scan_local_vars(const AST_NODE *prog, int *i)
 {
 	while(prog != NO_NODE) {
 		if(prog->type == VAR_DECL) {
@@ -80,11 +80,11 @@ void emit_local_vars(const AST_NODE *prog, int *i)
 			printf("/* local var: %s, %d */\n", var->symbol->name, *i);
 			var->idx = (*i)++;
 		} else if(prog->type == FOR_STMT) {
-			emit_local_vars(prog->for_stmt.init, i);
-			emit_local_vars(prog->for_stmt.body, i);
+			scan_local_vars(prog->for_stmt.init, i);
+			scan_local_vars(prog->for_stmt.body, i);
 		} else if(prog->type == IF_STMT) {
-			emit_local_vars(prog->if_stmt.true_stmt, i);
-			emit_local_vars(prog->if_stmt.false_stmt, i);
+			scan_local_vars(prog->if_stmt.true_stmt, i);
+			scan_local_vars(prog->if_stmt.false_stmt, i);
 		}
 		prog = prog->next_stmt;
 	}
@@ -426,7 +426,7 @@ void emit_func_body(AST_FUNC *func)
 
 	int pcount = func->param_count;
 	if(strcmp(func->symbol->name, "main") == 0) pcount = 1;
-	emit_local_vars(func->body, &pcount);
+	scan_local_vars(func->body, &pcount);
 	emit_stmts(func->body);
 }
 
