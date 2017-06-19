@@ -419,7 +419,7 @@ program : var_decl program   { $1->next_stmt = $2; $$ = prog = $1; }
 void yyerror(const char *errmsg)
 {
     has_error = 1;
-    printf("ERR (%d, %d): %s\n", linenum, colnum, errmsg);
+    fprintf(stderr, "PARSER_ERR: (%d, %d) %s\n", linenum, colnum, errmsg);
     exit(1);
 }
 

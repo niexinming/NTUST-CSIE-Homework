@@ -10,7 +10,7 @@ int ast_indent_size = 0;
 
 void asterror(const char *msg)
 {
-	printf("AST_ERROR: %s\n", msg);
+	fprintf(stderr, "AST_ERROR: %s\n", msg);
 	exit(1);
 }
 

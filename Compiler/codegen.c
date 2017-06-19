@@ -3,6 +3,8 @@
 #include <string.h>
 #include "codegen.h"
 
+#define cgerror(...) { fprintf(stderr, "CODEGEN_ERR:"); fprintf(stderr, __VA_ARGS__); fputc('\n', stderr); }
+
 int lblid = 0;
 
 #define NEW_LABEL (10 * ++lblid)
@@ -132,6 +134,7 @@ int emit_val(const AST_VALUE *val)
 		printf("ldc "); ast_dump_str(val->string); putchar('\n');
 	} else {
 		printf("/* ERROR: unsupported value type */\n");
+		cgerror("unsupported value type");
 	}
 	return val->data_type;
 }
