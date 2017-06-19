@@ -93,7 +93,8 @@ const char * ast_get_op_str(int op)
 		case NEGATIVE:    return "-";
 		case STREQU:      return "===";
 		case STRCAT:      return "+++";
-		case STRVAL:      return "%";
+		case STRVAL:      return "$STR";
+		case ARRGET:      return "##";
 		default:          assert(NULL); // unknown op
 	}
 	return NULL;
@@ -406,18 +407,35 @@ void ast_dump_for_stmt(const AST_NODE *stmt)
 	assert(stmt);
 	const AST_FOR *f = &stmt->for_stmt;
 
-	printf("<FOR(Init=");
+	puts("<FOR(");
+
+	ast_indent();
+
+	ast_pindent();
+	printf("Init=");
 	ast_dump_stmt(f->init);
-	printf(", Cond=");
+
+	puts(",");
+	ast_pindent();
+	printf("Cond=");
 	ast_dump_expr(f->cond);
-	printf(", Increment=");
+
+	puts(",");
+	ast_pindent();
+	printf("Increment=");
 	ast_dump_stmt(f->increment);
-	printf(", Body={\n");
+
+	puts(",");
+	ast_pindent();
+	printf("Body={\n");
 	ast_indent();
 	ast_dump_stmt_body(f->body);
 	ast_unindent();
 	ast_pindent();
-	printf("}>");
+	puts("}");
+	ast_unindent();
+	ast_pindent();
+	printf(")>");
 }
 
 void ast_dump_stmt(const AST_NODE *stmt)
@@ -438,9 +456,9 @@ void ast_dump_stmt(const AST_NODE *stmt)
 			ast_dump_assign(&stmt->assignment);
 			break;
 		case PRINT_STMT:
-			printf("<PRINT(Val=");
+			printf("<PRINT");
 			ast_dump_expr(stmt->child);
-			printf(")>");
+			printf(">");
 			break;
 		case READ_STMT:
 			printf("<READ(Var=");
