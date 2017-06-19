@@ -311,7 +311,7 @@ void emit_for(const AST_FOR *fors)
 	emit_label_def(label, "beginfor");
 	puts("/* for condition */");
 	emit_expr(fors->cond);
-	emit_label("ifne", label, "endfor");
+	emit_label("ifeq", label, "endfor");
 	puts("");
 
 	puts("/* for body */");
