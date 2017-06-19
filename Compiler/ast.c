@@ -8,7 +8,11 @@
 
 int ast_indent_size = 0;
 
-void yyerror(const char *errmsg);
+void asterror(const char *msg)
+{
+	printf("AST_ERROR: %s\n", msg);
+	exit(1);
+}
 
 void ast_indent()
 {
@@ -87,6 +91,9 @@ const char * ast_get_op_str(int op)
 		case LOGICAL_NOT: return "!";
 		case BITWISE_NOT: return "~";
 		case NEGATIVE:    return "-";
+		case STREQU:      return "===";
+		case STRCAT:      return "+++";
+		case STRVAL:      return "%";
 		default:          assert(NULL); // unknown op
 	}
 	return NULL;
@@ -114,7 +121,8 @@ const char * ast_get_node_type(enum AST_TYPE t)
 AST_NODE* ast_create_node(enum AST_TYPE type)
 {
 	AST_NODE *ast_node = malloc(sizeof(AST_NODE));
-	ast_node->next = NULL;
+	ast_node->next = NO_NODE;
+	ast_node->next_stmt = NO_NODE;
 	ast_node->type = type;
 	ast_node->child = NO_NODE;
 	return ast_node;
@@ -135,6 +143,8 @@ AST_NODE* ast_create_value_node(int type)
 {
 	AST_NODE *node = ast_create_node(CONST_VAL);
 	node->val.data_type = type;
+	node->next = NO_NODE;
+	node->next_stmt = NO_NODE;
     return node;
 }
 
@@ -172,7 +182,7 @@ AST_NODE* ast_create_var_node(int data_type, int var_type,
 {
 	assert(symbol && default_val);
 	if(default_val != NO_NODE && data_type != default_val->data_type) {
-		yyerror("Data type mismatch for var/const declaration");
+		asterror("Data type mismatch for var/const declaration");
 		return NULL;
 	}
 
@@ -279,7 +289,7 @@ void ast_dump_func_call(const AST_INVOKE *invoke)
 	printf("<CALL(FUNC=%s, ARGS=[", invoke->func->symbol->name);
 	const AST_NODE *arg = invoke->args;
 	for(int i = invoke->args_count - 1; i >= 0; i--) {
-		if(arg == NULL) { yyerror("missing arg"); assert(NULL); }
+		if(arg == NULL) { asterror("missing arg"); assert(NULL); }
 
 		ast_dump_expr(arg);
 		printf("%s", i ? ", " : "])>");
@@ -481,24 +491,24 @@ AST_NODE* ast_create_expr_node(const AST_NODE *l, int op, const AST_NODE *r)
 					node = ast_create_node(EXPR_UNARY);
 					goto success_follow_ltype;
 				}
-				yyerror("data type must be BOOL for LOGICAL NOT");
-				return NULL;
+				asterror("data type must be BOOL for LOGICAL NOT");
+				assert(NULL); return NULL;;
 
 			case BITWISE_NOT:
 				if(ltype == INT) {
 					node = ast_create_node(EXPR_UNARY);
 					goto success_follow_ltype;
 				}
-				yyerror("data type must be INT for BITWISE NOT");
-				return NULL;
+				asterror("data type must be INT for BITWISE NOT");
+				assert(NULL); return NULL;;
 
 			case NEGATIVE:
 				if(ltype == INT || ltype == REAL) {
 					node = ast_create_node(EXPR_UNARY);
 					goto success_follow_ltype;
 				}
-				yyerror("data type must be INT or REAL for NEGATIVE");
-				return NULL;
+				asterror("data type must be INT or REAL for NEGATIVE");
+				assert(NULL); return NULL;;
 		}
 	}
 
@@ -509,33 +519,40 @@ AST_NODE* ast_create_expr_node(const AST_NODE *l, int op, const AST_NODE *r)
 		case LOGICAL_OR:
 		case LOGICAL_AND:
 			if(ltype != BOOL || rtype != BOOL) {
-				yyerror("data type must be BOOL for LOGICAL OR/AND");
-				return NULL;
+				asterror("data type must be BOOL for LOGICAL OR/AND");
+				assert(NULL); return NULL;;
 			}
 		case LT:
 		case GT:
 		case LTE:
 		case GTE:
 			if(ltype == STRING || rtype == STRING) {
-				yyerror("can not use LT/GT/LTE/GTE to compare string");
-				return NULL;
+				asterror("can not use LT/GT/LTE/GTE to compare string");
+				assert(NULL); return NULL;;
 			}
 		case EQ:
 		case NEQ:
 			if(ltype == rtype) {
+				if(ltype == STRING) {
+					if(op == EQ) {
+						op = STREQU;
+					} else if(op == NEQ) {
+						return ast_create_expr_node(ast_create_expr_node(l, EQ, r), LOGICAL_NOT, NO_NODE);
+					}
+				}
 				node = ast_create_node(EXPR_BINARY);
 				node->expr.data_type = BOOL;
 				goto success;
 			}
-			yyerror("compare type mismatch");
-			return NULL;
+			asterror("compare type mismatch");
+			assert(NULL); return NULL;;
 
 
 		case BITWISE_OR:
 		case BITWISE_AND:
 			if(ltype != INT || rtype != INT) {
-				yyerror("data type must be INT for BITWISE OR/AND");
-				return NULL;
+				asterror("data type must be INT for BITWISE OR/AND");
+				assert(NULL); return NULL;;
 			}
 
 		case ADD:
@@ -550,16 +567,16 @@ AST_NODE* ast_create_expr_node(const AST_NODE *l, int op, const AST_NODE *r)
 		case DIV:
 		case MOD:
 			if(ltype != rtype) {
-				yyerror("type mismatch in arithmetic opterator");
-				return NULL;
+				asterror("type mismatch in arithmetic opterator");
+				assert(NULL); return NULL;;
 			}
 			if(ltype == BOOL) {
-				yyerror("BOOL is not allowed in arithmetic operator");
-				return NULL;
+				asterror("BOOL is not allowed in arithmetic operator");
+				assert(NULL); return NULL;;
 			}
 			if(ltype == STRING) {
-				yyerror("STRING is not allowed in arithmetic operator");
-				return NULL;
+				asterror("STRING is not allowed in arithmetic operator");
+				assert(NULL); return NULL;;
 			}
 			node = ast_create_node(EXPR_BINARY);
 			goto success_follow_ltype;
@@ -578,7 +595,7 @@ AST_NODE* ast_create_if_node(AST_NODE* cond, AST_NODE *true_stmt,
 		AST_NODE *false_stmt)
 {
 	if(ast_get_expr_type(cond) != BOOL) {
-		yyerror("if condition must be BOOL");
+		asterror("if condition must be BOOL");
 		return NULL;
 	}
 	AST_NODE *node = ast_create_node(IF_STMT);
@@ -593,7 +610,7 @@ AST_NODE* ast_create_for_node(AST_NODE* init, AST_NODE* cond,
 {
 	AST_NODE *node = ast_create_node(FOR_STMT);
 	if(ast_get_expr_type(cond) != BOOL) {
-		yyerror("for condition must be BOOL");
+		asterror("for condition must be BOOL");
 		return NULL;
 	}
 	node->for_stmt.init = init;
@@ -606,23 +623,23 @@ AST_NODE* ast_create_for_node(AST_NODE* init, AST_NODE* cond,
 AST_NODE* ast_create_assign(AST_NODE *var_node, int idx, int op, AST_NODE *rval)
 {
 	if(var_node->type != VAR_DECL) {
-		yyerror("lval in assignment must be a variable");
+		asterror("lval in assignment must be a variable");
 		return NULL;
 	}
 
 	int val_type = ast_get_expr_type(rval);
 	if(!ast_is_non_void_type(val_type)) {
-		yyerror("rval in assignment must be a non-void type");
+		asterror("rval in assignment must be a non-void type");
 		return NULL;
 	}
 
 	if(var_node->var.data_type != val_type) {
-		yyerror("type mismatch in assignment");
+		asterror("type mismatch in assignment");
 		return NULL;
 	}
 
 	if(idx && idx >= var_node->var.array_size) {
-		yyerror("array index out of bound in assignment");
+		asterror("array index out of bound in assignment");
 		return NULL;
 	}
 

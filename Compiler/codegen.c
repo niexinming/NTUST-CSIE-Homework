@@ -5,6 +5,8 @@
 
 int lblid = 0;
 
+#define NEW_LABEL (10 * ++lblid)
+
 const char *JAVA_STRING = "java.lang.String";
 
 const char *get_type(int typecode)
@@ -73,6 +75,7 @@ void emit_local_vars(const AST_NODE *prog, int *i)
 	while(prog != NO_NODE) {
 		if(prog->type == VAR_DECL) {
 			AST_VAR *var = (AST_VAR *)&prog->var;
+			printf("/* local var: %s, %d */\n", var->symbol->name, *i);
 			var->idx = (*i)++;
 
 			if(var->val == NO_NODE) {
@@ -96,7 +99,7 @@ void emit_local_vars(const AST_NODE *prog, int *i)
 int emit_load_var(const AST_VAR *var)
 {
 	const char *vname = var->symbol->name;
-	printf("/* load var %s (%d) */\n", vname, var->idx);
+	printf("/* load var %s (%d) $%p */\n", vname, var->idx, var);
 
 	if(var->idx == -1) { // global variable / constants
 		printf("getstatic %s prog.%s\n", get_type(var->data_type), vname);
@@ -144,7 +147,7 @@ int emit_unary_expr(const AST_NODE *node)
 			puts("ineg");
 			break;
 		case LOGICAL_NOT:
-			label = 10 * ++lblid;
+			label = NEW_LABEL;
 			puts("/* begin logical not */");
 			emit_label("ifeq", label, "1");
 			puts("iconst_0");
@@ -167,7 +170,7 @@ int emit_unary_expr(const AST_NODE *node)
 
 void emit_binary_cond(const char *opcode)
 {
-	int label = 10 * ++lblid;
+	int label = NEW_LABEL;
 	puts("/* begin binary cond */");
 	puts("isub");
 	emit_label(opcode, label, "cond_true");
@@ -185,6 +188,7 @@ int emit_binary_expr(const AST_NODE *node)
 	emit_expr(expr->lval);
 	emit_expr(expr->rval);
 	switch(expr->op) {
+		case STREQU: printf("invokevirtual boolean %s.equals(java.lang.Object)\n", JAVA_STRING); break;
 		case ADD: puts("iadd"); break;
 		case SUB: puts("isub"); break;
 		case DIV: puts("idiv"); break;
@@ -238,7 +242,7 @@ int emit_invoke(const AST_INVOKE *invoke)
 	const char *fname = func->symbol->name;
 	const char *ftype = get_type(func->return_type);
 	printf("invokestatic %s prog.%s(", ftype, fname);
-	emit_func_param(func);
+	emit_func_param(func, 0);
 	printf(")\n");
 
 	return func->return_type;
@@ -263,7 +267,7 @@ void emit_label_def(int lblid, const char *subid)
 
 void emit_if(const AST_IF *ifs)
 {
-	int label = 10 * ++lblid;
+	int label = NEW_LABEL;
 	int has_else_part = ifs->false_stmt != NO_NODE;
 
 	puts("/* begin if condition */");
@@ -289,11 +293,13 @@ void emit_if(const AST_IF *ifs)
 	} else {
 		puts("/* if statement without ELSE part */");
 	}
+
+	puts("nop");
 }
 
 void emit_for(const AST_FOR *fors)
 {
-	int label = 10 * ++lblid;
+	int label = NEW_LABEL;
 
 	puts("/* for init */");
 	emit_stmts(fors->init);
@@ -415,15 +421,16 @@ void emit_func_body(AST_FUNC *func)
 	emit_stmts(func->body);
 }
 
-void emit_func_param(const AST_FUNC *func)
+void emit_func_param(const AST_FUNC *func, int set_idx)
 {
 	AST_NODE *params = (AST_NODE *)func->params;
 	int i = 0;
 
 	while(params != NO_NODE) {
-		if(i)
-			printf(", ");
-		params->var.idx = i++;
+		if(i) printf(", ");
+		if(set_idx) params->var.idx = i;
+		i++;
+
 		if(params->var.data_type != INT) {
 			printf("/* ERROR: only integer type are supported */ int");
 		} else {
@@ -457,7 +464,7 @@ void emit_funcs(AST_NODE *prog, int main)
 					printf("/* ERROR: only support int return type */");
 				}
 				printf("method public static %s %s(", ftype, fname);
-				emit_func_param(func);
+				emit_func_param(func, 1);
 				printf(")\n");
 				puts("max_stack 30");
 				puts("max_locals 30");

@@ -15,13 +15,14 @@ char err_msg_buf[1024];
 void yyerror(const char *errmsg);
 #define yyerrorf(...) sprintf(err_msg_buf, __VA_ARGS__); yyerror(err_msg_buf);
 
-#define trace(...) if(getenv("TRACE")) {printf("TRACE: "); printf(__VA_ARGS__); putchar(0x0a);}
+#define trace(...) if(getenv("TRACE")) {printf("/* TRACE: "); printf(__VA_ARGS__); puts(" */");}
 
 SYMTAB *symtab, *root_symtab;
 
 AST_NODE *prog = NO_NODE;
 
 void begin_context() {
+    trace("begin context");
     symtab = symtab_create(symtab);
 }
 
@@ -29,6 +30,7 @@ void end_context() {
     //symtab_dump(symtab);
     //symtab = symtab_destroy(symtab);
     symtab = symtab->parent;
+    trace("exit context");
 }
 
 %}
@@ -74,7 +76,7 @@ void end_context() {
 %token BREAK CASE CONST CONTINUE DEFAULT ELSE FALSE FOR FUNC GO IF IMPORT NIL PRINT PRINTLN READ RETURN STRUCT SWITCH TRUE TYPE VAR VOID WHILE
 
 /* hack for constant definition */
-%token PARAM NEGATIVE NOP
+%token PARAM NEGATIVE NOP STREQU STRCAT STRVAL
 
 /* operator priority */
 
@@ -92,6 +94,7 @@ void end_context() {
 %type <ast_node> program;
 
 %type <symbol> id;
+%type <symbol> id_new;
 %type <ast_node> id_eval;
 
 %type <integer> basic_type;
@@ -108,6 +111,7 @@ void end_context() {
 
 %type <ast_node> func_params_list;
 %type <ast_node> func_params_def;
+%type <ast_node> func_type_id;
 %type <ast_node> func_head;
 %type <ast_node> func_decl;
 
@@ -142,11 +146,23 @@ id : ID {
         yyerrorf("duplicated symbol: %s", $1);
     }
 
-    if(symtab_insert($1, NULL, symtab, &$$) == 0) {
+    if(symtab_insert($1, NO_NODE, symtab, &$$) == 0) {
         yyerror("create symbol failed");
+        exit(1);
     }
 
-    $$->meta = NO_NODE;
+    trace("id var: %s", $1);
+
+    free($1);
+};
+
+id_new : ID {
+    if(symtab_insert($1, NO_NODE, symtab, &$$) == 0) {
+        yyerror("create symbol failed");
+        exit(1);
+    }
+
+    trace("id_new var: %s", $1);
 
     free($1);
 };
@@ -348,11 +364,11 @@ for_stmt : FOR LEFT_PARENTHESIS
 
 /* functions */
 
-func_params_list : id type {
+func_params_list : id_new type {
                      $$ = $1->meta = ast_create_var_node($2.t, PARAM, $2.n, $1, NO_NODE);
                      $$->next = NO_NODE;
                  }
-                 | id type COMMA func_params_list {
+                 | id_new type COMMA func_params_list {
                      $$ = $1->meta = ast_create_var_node($2.t, PARAM, $2.n, $1, NO_NODE);
                      $$->next = $4;
                  }
@@ -362,21 +378,31 @@ func_params_def : func_params_list { $$ = $1; }
                 | { $$ = NO_NODE; }
                 ;
 
+func_type_id :
+             FUNC type id {
+                trace("func type id");
+                $$ = $3->meta = ast_create_func_node($3, $2.t, NO_NODE, NO_NODE);
+                begin_context();
+             }
+             ;
+
 func_head :
-          FUNC type id
+          func_type_id
           LEFT_PARENTHESIS func_params_def RIGHT_PARENTHESIS {
               trace("begin of func");
-              begin_context();
-              $$ = $3->meta = ast_create_func_node($3, $2.t, $5, NO_NODE);
-          }
+              $$ = $1;
+              $$->func.params = $3;
+          };
 
 func_decl :
           func_head block {
-              end_context();
+              begin_context();
               $$ = $1;
               $$->func.body = $2;
               // TODO: check return type
               trace("end of func");
+              end_context();
+              end_context();
           }
           ;
 

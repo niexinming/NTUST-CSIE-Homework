@@ -136,6 +136,7 @@ AST_NODE* ast_create_invoke_node(AST_FUNC *func, AST_NODE *args);
 void ast_dump_func_call(const AST_INVOKE *invoke);
 void ast_dump_expr(const AST_NODE *node);
 void ast_dump_stmt(const AST_NODE *stmt);
+void ast_dump_stmt_body(const AST_NODE *p);
 AST_NODE* ast_create_expr_node(const AST_NODE *l, int op, const AST_NODE *r);
 AST_NODE* ast_create_if_node(AST_NODE* cond, AST_NODE *true_stmt,
 		AST_NODE *false_stmt);
