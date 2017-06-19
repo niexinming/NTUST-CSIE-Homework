@@ -74,7 +74,7 @@ void end_context() {
 %token BREAK CASE CONST CONTINUE DEFAULT ELSE FALSE FOR FUNC GO IF IMPORT NIL PRINT PRINTLN READ RETURN STRUCT SWITCH TRUE TYPE VAR VOID WHILE
 
 /* hack for constant definition */
-%token PARAM NEGATIVE NOP STREQU STRCAT STRVAL
+%token PARAM NEGATIVE NOP STREQU STRCAT STRVAL ARRGET
 
 /* operator priority */
 
@@ -243,25 +243,26 @@ expr : LEFT_PARENTHESIS expr RIGHT_PARENTHESIS { $$ = $2; }
      | LOGICAL_NOT expr      { $$ = ast_create_expr_node($2, LOGICAL_NOT, NO_NODE); }
      | BITWISE_NOT expr      { $$ = ast_create_expr_node($2, BITWISE_NOT, NO_NODE); }
      | SUB expr              { $$ = ast_create_expr_node($2, NEGATIVE,    NO_NODE); }
+     | id_eval LEFT_BRACKET expr RIGHT_BRACKET { $$ = ast_create_expr_node($1, ARRGET, $3); }
      ;
 
 
 
 /* basic stmt */
-assign : id_eval ASSIGN     expr { $$ = ast_create_assign($1, 0, NOP, $3); }
-       | id_eval ASSIGN_ADD expr { $$ = ast_create_assign($1, 0, ADD, $3); }
-       | id_eval ASSIGN_SUB expr { $$ = ast_create_assign($1, 0, SUB, $3); }
-       | id_eval ASSIGN_MUL expr { $$ = ast_create_assign($1, 0, MUL, $3); }
-       | id_eval ASSIGN_DIV expr { $$ = ast_create_assign($1, 0, DIV, $3); }
-       | id_eval ASSIGN_MOD expr { $$ = ast_create_assign($1, 0, MOD, $3); }
-       | id_eval ASSIGN_XOR expr { $$ = ast_create_assign($1, 0, XOR, $3); }
-       | id_eval LEFT_BRACKET CONST_INT RIGHT_BRACKET ASSIGN     expr { $$ = ast_create_assign($1, $3, NOP, $6); }
-       | id_eval LEFT_BRACKET CONST_INT RIGHT_BRACKET ASSIGN_ADD expr { $$ = ast_create_assign($1, $3, ADD, $6); }
-       | id_eval LEFT_BRACKET CONST_INT RIGHT_BRACKET ASSIGN_SUB expr { $$ = ast_create_assign($1, $3, SUB, $6); }
-       | id_eval LEFT_BRACKET CONST_INT RIGHT_BRACKET ASSIGN_MUL expr { $$ = ast_create_assign($1, $3, MUL, $6); }
-       | id_eval LEFT_BRACKET CONST_INT RIGHT_BRACKET ASSIGN_DIV expr { $$ = ast_create_assign($1, $3, DIV, $6); }
-       | id_eval LEFT_BRACKET CONST_INT RIGHT_BRACKET ASSIGN_MOD expr { $$ = ast_create_assign($1, $3, MOD, $6); }
-       | id_eval LEFT_BRACKET CONST_INT RIGHT_BRACKET ASSIGN_XOR expr { $$ = ast_create_assign($1, $3, XOR, $6); }
+assign : id_eval ASSIGN     expr { $$ = ast_create_assign($1, NO_NODE, NOP, $3); }
+       | id_eval ASSIGN_ADD expr { $$ = ast_create_assign($1, NO_NODE, ADD, $3); }
+       | id_eval ASSIGN_SUB expr { $$ = ast_create_assign($1, NO_NODE, SUB, $3); }
+       | id_eval ASSIGN_MUL expr { $$ = ast_create_assign($1, NO_NODE, MUL, $3); }
+       | id_eval ASSIGN_DIV expr { $$ = ast_create_assign($1, NO_NODE, DIV, $3); }
+       | id_eval ASSIGN_MOD expr { $$ = ast_create_assign($1, NO_NODE, MOD, $3); }
+       | id_eval ASSIGN_XOR expr { $$ = ast_create_assign($1, NO_NODE, XOR, $3); }
+       | id_eval LEFT_BRACKET expr RIGHT_BRACKET ASSIGN     expr { $$ = ast_create_assign($1, $3, NOP, $6); }
+       | id_eval LEFT_BRACKET expr RIGHT_BRACKET ASSIGN_ADD expr { $$ = ast_create_assign($1, $3, ADD, $6); }
+       | id_eval LEFT_BRACKET expr RIGHT_BRACKET ASSIGN_SUB expr { $$ = ast_create_assign($1, $3, SUB, $6); }
+       | id_eval LEFT_BRACKET expr RIGHT_BRACKET ASSIGN_MUL expr { $$ = ast_create_assign($1, $3, MUL, $6); }
+       | id_eval LEFT_BRACKET expr RIGHT_BRACKET ASSIGN_DIV expr { $$ = ast_create_assign($1, $3, DIV, $6); }
+       | id_eval LEFT_BRACKET expr RIGHT_BRACKET ASSIGN_MOD expr { $$ = ast_create_assign($1, $3, MOD, $6); }
+       | id_eval LEFT_BRACKET expr RIGHT_BRACKET ASSIGN_XOR expr { $$ = ast_create_assign($1, $3, XOR, $6); }
        ;
 
 return_stmt : RETURN { $$ = ast_create_node(RETURN_STMT); }

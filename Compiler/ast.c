@@ -592,6 +592,9 @@ AST_NODE* ast_create_expr_node(const AST_NODE *l, int op, const AST_NODE *r)
 			}
 			node = ast_create_node(EXPR_BINARY);
 			goto success_follow_ltype;
+		case ARRGET:
+			node = ast_create_node(EXPR_BINARY);
+			goto success_follow_ltype;
 	}
 
 success_follow_ltype:
@@ -632,7 +635,22 @@ AST_NODE* ast_create_for_node(AST_NODE* init, AST_NODE* cond,
 	return node;
 }
 
-AST_NODE* ast_create_assign(AST_NODE *var_node, int idx, int op, AST_NODE *rval)
+int ast_get_const_int(AST_NODE *node, int *v)
+{
+	if(node == NO_NODE || node->type != CONST_VAL) {
+		return 0;
+	}
+
+	AST_VALUE *val = &node->val;
+	if(val->data_type != INT) {
+		return 0;
+	}
+
+	*v = val->integer;
+	return 1;
+}
+
+AST_NODE* ast_create_assign(AST_NODE *var_node, AST_NODE *idx, int op, AST_NODE *rval)
 {
 	if(var_node->type != VAR_DECL) {
 		asterror("lval in assignment must be a variable");
@@ -650,9 +668,12 @@ AST_NODE* ast_create_assign(AST_NODE *var_node, int idx, int op, AST_NODE *rval)
 		return NULL;
 	}
 
-	if(idx && idx >= var_node->var.array_size) {
-		asterror("array index out of bound in assignment");
-		return NULL;
+	int i;
+	if(ast_get_const_int(idx, &i)) {
+		if(i && i >= var_node->var.array_size) {
+			asterror("array index out of bound in assignment");
+			return NULL;
+		}
 	}
 
 	if(op != NOP) {
@@ -660,6 +681,7 @@ AST_NODE* ast_create_assign(AST_NODE *var_node, int idx, int op, AST_NODE *rval)
 	}
 
 	AST_NODE *node = ast_create_node(ASSIGN_STMT);
+	node->assignment.index = idx;
 	node->assignment.lval = &var_node->var;
 	node->assignment.rval = rval;
 

@@ -3,7 +3,7 @@
 #include <string.h>
 #include "codegen.h"
 
-#define cgerror(...) { fprintf(stderr, "CODEGEN_ERR:"); fprintf(stderr, __VA_ARGS__); fputc('\n', stderr); }
+#define cgerror(...) { fprintf(stderr, "CODEGEN_ERR:"); fprintf(stderr, __VA_ARGS__); fputc('\n', stderr); exit(1); }
 
 int lblid = 0;
 
@@ -23,9 +23,12 @@ const char *get_type(int typecode)
 	}
 }
 
-const char *op_get(int typecode)
+const char *op_get(const AST_VAR *var)
 {
-	switch(typecode) {
+	if(var->array_size > 0) {
+		return "aload";
+	}
+	switch(var->data_type) {
 		case BOOL:
 		case INT: return "iload";
 		case REAL: return "dload";
@@ -34,9 +37,20 @@ const char *op_get(int typecode)
 	}
 }
 
-const char *op_set(int typecode)
+const char *op_arr_get(int typecode)
 {
 	switch(typecode) {
+		case BOOL:
+		case INT: return "iaload";
+		case REAL: return "daload";
+		case STRING: return "aaload";
+		default: return "iaload /* ERROR: unsupported type */";
+	}
+}
+
+const char *op_set(const AST_VAR *var)
+{
+	switch(var->data_type) {
 		case BOOL:
 		case INT: return "istore";
 		case REAL: return "dstore";
@@ -98,13 +112,13 @@ int emit_load_var(const AST_VAR *var)
 	if(var->idx == -1) { // global variable / constants
 		printf("getstatic %s prog.%s\n", get_type(var->data_type), vname);
 	} else { // function arguments or local variable
-		printf("%s %d\n", op_get(var->data_type), var->idx);
+		printf("%s %d\n", op_get(var), var->idx);
 	}
 
 	return var->data_type;
 }
 
-void emit_store(const AST_VAR *var)
+void emit_atomic_store(const AST_VAR *var)
 {
 	const char *vname = var->symbol->name;
 	printf("/* store var %s (%d) */\n", vname, var->idx);
@@ -112,7 +126,7 @@ void emit_store(const AST_VAR *var)
 	if(var->idx == -1) { // global
 		printf("putstatic %s prog.%s\n", get_type(var->data_type), vname);
 	} else { // local
-		printf("%s %d\n", op_set(var->data_type), var->idx);
+		printf("%s %d\n", op_set(var), var->idx);
 	}
 }
 
@@ -204,6 +218,7 @@ int emit_binary_expr(const AST_NODE *node)
 		case LOGICAL_AND: puts("iand"); break;
 		case BITWISE_OR:
 		case LOGICAL_OR:  puts("ior"); break;
+		case ARRGET:      puts(op_arr_get(expr->data_type)); break;
 		default: printf("iadd /* ERROR: unsupported operator: %d */\n", expr->op); break;
 	}
 	return expr->data_type;
@@ -224,6 +239,7 @@ int emit_expr(const AST_NODE *expr)
 			return emit_binary_expr(expr);
 		default:
 			printf("/* ERROR: invalid expr type */\n");
+			cgerror("invalid expr type");
 			return VOID;
 	}
 }
@@ -249,8 +265,25 @@ int emit_invoke(const AST_INVOKE *invoke)
 
 void emit_assign(const AST_ASSIGN *assign)
 {
-	emit_expr(assign->rval);
-	emit_store(assign->lval);
+	if(assign->index == NO_NODE) {
+		emit_expr(assign->rval);
+		emit_atomic_store(assign->lval);
+	} else {
+		// assign to array
+		if(ast_get_expr_type(assign->index) != INT) {
+			cgerror("array index must be INT");
+		}
+
+		emit_load_var(assign->lval);
+		emit_expr(assign->index);
+		emit_expr(assign->rval);
+		switch(assign->lval->data_type) {
+			case BOOL:
+			case INT: puts("iastore"); break;
+			case REAL: puts("fastore"); break;
+			case STRING: puts("aastore"); break;
+		}
+	}
 }
 
 void emit_label(const char * prefix, int lblid, const char *subid)
@@ -350,7 +383,7 @@ void emit_read(const AST_NODE *expr)
 			break;
 	}
 
-	emit_store(var);
+	emit_atomic_store(var);
 }
 
 void emit_return(const AST_NODE *expr)
@@ -364,6 +397,25 @@ void emit_return(const AST_NODE *expr)
 		case INT: puts("ireturn"); break;
 		case STRING: puts("areturn"); break;
 		default: puts("return /* ERROR: unknown return type */"); break;
+	}
+}
+
+void emit_local_var(const AST_VAR *var)
+{
+	if(var->val != NO_NODE) {
+		// non-array
+		printf("/* var#%-2d %s has val */\n", var->idx, var->symbol->name);
+		emit_val(var->val);
+		emit_atomic_store(var);
+	} else if(var->array_size > 0) {
+		// array
+		printf("/* var#%-2d %s is array */\n", var->idx, var->symbol->name);
+		printf("sipush %d\n", var->array_size);
+		if(var->data_type == STRING) putchar('a'); // anewarray
+		printf("newarray %s\n", get_type(var->data_type));
+		printf("astore %d\n", var->idx);
+	} else {
+		printf("/* var#%-2d %s has no val */\n", var->idx, var->symbol->name);
 	}
 }
 
@@ -393,17 +445,7 @@ void emit_stmts(const AST_NODE *stmt)
 				emit_read(stmt);
 				break;
 			case VAR_DECL:
-				{
-					const AST_VAR *var = &stmt->var;
-
-					if(var->val == NO_NODE) {
-						printf("/* var#%-2d %s has no val */\n", var->idx, var->symbol->name);
-					} else {
-						printf("/* var#%-2d %s has val */\n", var->idx, var->symbol->name);
-						emit_val(var->val);
-						emit_store(var);
-					}
-				}
+				emit_local_var(&stmt->var);
 				break;
 
 			case CONST_VAL:

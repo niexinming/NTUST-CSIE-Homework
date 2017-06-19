@@ -72,9 +72,9 @@ typedef struct AST_INVOKE_s {
 
 // assignment
 typedef struct AST_ASSIGN_s {
-	int                     index; // array index, 0 for non-array
-	const struct AST_VAR_s  *lval; // which variable to write
-	const struct AST_NODE_s *rval; // what to write
+	const struct AST_NODE_s *index; // array index, 0 for non-array
+	const struct AST_VAR_s  *lval;  // which variable to write
+	const struct AST_NODE_s *rval;  // what to write
 } AST_ASSIGN;
 
 // expression
@@ -142,7 +142,7 @@ AST_NODE* ast_create_if_node(AST_NODE* cond, AST_NODE *true_stmt,
 		AST_NODE *false_stmt);
 AST_NODE* ast_create_for_node(AST_NODE* init, AST_NODE* cond,
 		AST_NODE *increment, AST_NODE *body);
-AST_NODE* ast_create_assign(AST_NODE *var, int idx, int op, AST_NODE *val);
+AST_NODE* ast_create_assign(AST_NODE *var_node, AST_NODE *idx, int op, AST_NODE *rval);
 int ast_get_expr_type(const AST_NODE *node);
 const char * ast_get_name_of(const AST_NODE *node);
 
