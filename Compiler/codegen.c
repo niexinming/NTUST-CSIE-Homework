@@ -195,7 +195,7 @@ int emit_binary_expr(const AST_NODE *node)
 	emit_expr(expr->rval);
 	switch(expr->op) {
 		case STREQU: printf("invokevirtual boolean %s.equals(java.lang.Object)\n", JAVA_STRING); break;
-		case STRCAT: printf("invokevirtual %s %1$s.concat(%1$s)\n", JAVA_STRING); break;
+		case STRCAT: printf("invokevirtual %1$s %1$s.concat(%1$s)\n", JAVA_STRING); break;
 		case ADD: puts("iadd"); break;
 		case SUB: puts("isub"); break;
 		case DIV: puts("idiv"); break;
