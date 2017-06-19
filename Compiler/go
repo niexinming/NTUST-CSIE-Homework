@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "[*] Compile to jasm"
-./parser "$1" > prog.jasm || exit 1
+./goc "$1" > prog.jasm || exit 1
 echo "[*] Run assembler"
 ./javaa/javaa prog.jasm || exit 1
 echo "[*] Execute program"

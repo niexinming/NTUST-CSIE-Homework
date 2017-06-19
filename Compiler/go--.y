@@ -7,18 +7,16 @@
 #include "symtab.h"
 #include "ast.h"
 #include "scanner.c"
-#include "codegen.h"
 
-int has_error = 0;
+int parser_trace = 0;
 char err_msg_buf[1024];
 
 void yyerror(const char *errmsg);
 #define yyerrorf(...) sprintf(err_msg_buf, __VA_ARGS__); yyerror(err_msg_buf);
 
-#define trace(...) if(getenv("TRACE")) {printf("/* TRACE: "); printf(__VA_ARGS__); puts(" */");}
+#define trace(...) if(getenv("TRACE") || parser_trace) {printf("TRACE: "); printf(__VA_ARGS__); puts("");}
 
 SYMTAB *symtab, *root_symtab;
-
 AST_NODE *prog = NO_NODE;
 
 void begin_context() {
@@ -418,26 +416,9 @@ program : var_decl program   { $1->next_stmt = $2; $$ = prog = $1; }
 %%
 void yyerror(const char *errmsg)
 {
-    has_error = 1;
     fprintf(stderr, "PARSER_ERR: (%d, %d) %s\n", linenum, colnum, errmsg);
     exit(1);
 }
-
-int main(int argc, char *argv[])
-{
-	symtab = root_symtab = symtab_create(NULL);
-
-    if(argc >= 2) {
-        freopen(argv[1], "r", stdin);
-    }
-
-	yyparse();
-
-    codegen(prog);
-
-	symtab_destroy(root_symtab);
-}
-
 /*
     vim: et
 */

@@ -21,12 +21,14 @@
 
 #define dumpline { \
                  buf[colnum-1] = 0; \
-				 if(getenv("DUMPLINE")) printf(" | %4d: %s ", linenum, buf); \
+				 if(getenv("DUMPLINE") || scanner_dumpline) printf(" | %4d: %s ", linenum, buf); \
 				 linenum++; colnum = 0; buf[0] = '\0'; }
 
 #define MAX_LINE_LENG 65536
 
 #include "tokens.h"
+
+int scanner_dumpline = 0;
 
 int colnum = 1;
 int linenum = 1;

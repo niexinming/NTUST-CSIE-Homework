@@ -1,9 +1,9 @@
 scanner
-parser
+goc
+goc.dSYM
 scanner.c
 parser.c
 parser.h
-parser.dSYM
 parser.output
 prog.class
 prog.jasm
