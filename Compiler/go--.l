@@ -10,13 +10,14 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "strdup.h"
 
 #define LIST                   { strcat(buf, yytext); colnum += strlen(yytext); }
 #define token(t)               { LIST; if(DETAIL_LOG) token_pretty_print(t, (#t)); return t; }
 #define tokenInteger(t, i)     { LIST; PRINTF("<int:%s>\n", i); yylval.integer = atoi(i); return t; }
 #define tokenReal(t, i)        { LIST; sscanf(i, "%lf", &yylval.real); PRINTF("<real:%g>\n", yylval.real); return t; }
 #define tokenString(t, s)      { LIST; if(DETAIL_LOG) token_dump_string(s); yylval.string = s; return t; }
-#define tokenIdentifier(t, id) { LIST; PRINTF("<id:%s>\n", id); yylval.string = strdup(id); return t; }
+#define tokenIdentifier(t, id) { LIST; PRINTF("<id:%s>\n", id); yylval.string = mystrdup(id); return t; }
 
 #define dumpline { \
                  buf[colnum-1] = 0; \

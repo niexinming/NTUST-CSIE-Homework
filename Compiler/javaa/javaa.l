@@ -42,6 +42,37 @@ IS                      (u|U|l|L)*
 	}
    int linenumber;
    int col;
+
+char *unescape_str(const char *src, size_t len)
+{
+	char *buff = (char *)malloc(len + 1);
+	size_t i = 0, j = 0;
+
+	while(i < len) {
+		if(src[i] == '\\') {
+			switch(src[i+1]) {
+				case '\0':
+					buff[j++] = '\\';
+					i++;
+					i++;
+					break;
+
+				case 'n':
+					buff[j++] = '\n';
+					i++;
+					i++;
+					break;
+
+				default:
+					buff[j++] = src[i++];
+			}
+		} else {
+			buff[j++] = src[i++];
+		}
+	}
+
+	return buff;
+}
 %}
 
 %%
@@ -408,9 +439,8 @@ IS                      (u|U|l|L)*
 			        of the orig. string since we strip the quotes
 				out; but we add one to the length for the 
 				terminating null */
-			     yylval.string = (char*) malloc((yyleng-1)*sizeof(char));
-			     strncpy(yylval.string,&(yytext[1]),yyleng-2);
-			     yylval.string[yyleng-2]='\0';
+
+				yylval.string = unescape_str(&yytext[1], yyleng - 2);
 			     #ifdef DEBUG
 			     printf("yyleng %i, yylval.string %s, yylval.string's length %i",yyleng, yylval.string, strlen(yylval.string));
 			     #endif   

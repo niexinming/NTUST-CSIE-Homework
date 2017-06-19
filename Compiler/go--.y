@@ -1,9 +1,8 @@
 %{
-#define _BSD_SOURCE // for strdup on gcc 4.8.4
-#define _POSIX_SOURCE // for fileno
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "strdup.h"
 
 #include "symtab.h"
 #include "ast.h"
@@ -178,7 +177,7 @@ type : LEFT_BRACKET CONST_INT RIGHT_BRACKET basic_type { $$.t = $4; $$.n = $2; }
 
 const_value : CONST_INT    { $$ = ast_create_value_node(INT);     $$->val.integer = $1; }
             | CONST_REAL   { $$ = ast_create_value_node(REAL);    $$->val.real = $1; }
-            | CONST_STRING { $$ = ast_create_value_node(STRING);  $$->val.string = strdup($1); }
+            | CONST_STRING { $$ = ast_create_value_node(STRING);  $$->val.string = mystrdup($1); }
             | TRUE         { $$ = ast_create_value_node(BOOL);    $$->val.integer = 1; }
             | FALSE        { $$ = ast_create_value_node(BOOL);    $$->val.integer = 0; }
             ;
