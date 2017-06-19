@@ -140,7 +140,7 @@ int emit_unary_expr(const AST_NODE *node)
 {
 	int label;
 	const AST_EXPR *expr = &node->expr;
-	emit_expr(expr->lval);
+	int dtype = emit_expr(expr->lval);
 
 	switch(expr->op) {
 		case NEGATIVE:
@@ -160,6 +160,9 @@ int emit_unary_expr(const AST_NODE *node)
 		case BITWISE_NOT:
 			puts("iconst_m1");
 			puts("ixor");
+			break;
+		case STRVAL:
+			printf("invokestatic %s java.lang.String.valueOf(%s)\n", JAVA_STRING, get_type(dtype));
 			break;
 		default:
 			printf("sipush 0 /* ERROR: unsupported operator: %d */\n", expr->op);
@@ -189,6 +192,7 @@ int emit_binary_expr(const AST_NODE *node)
 	emit_expr(expr->rval);
 	switch(expr->op) {
 		case STREQU: printf("invokevirtual boolean %s.equals(java.lang.Object)\n", JAVA_STRING); break;
+		case STRCAT: printf("invokevirtual %s %1$s.concat(%1$s)\n", JAVA_STRING); break;
 		case ADD: puts("iadd"); break;
 		case SUB: puts("isub"); break;
 		case DIV: puts("idiv"); break;

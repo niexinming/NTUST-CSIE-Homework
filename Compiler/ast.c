@@ -509,6 +509,11 @@ AST_NODE* ast_create_expr_node(const AST_NODE *l, int op, const AST_NODE *r)
 				}
 				asterror("data type must be INT or REAL for NEGATIVE");
 				assert(NULL); return NULL;;
+
+			case STRVAL:
+				node = ast_create_node(EXPR_UNARY);
+				node->expr.data_type = STRING;
+				goto success;
 		}
 	}
 
@@ -557,8 +562,15 @@ AST_NODE* ast_create_expr_node(const AST_NODE *l, int op, const AST_NODE *r)
 
 		case ADD:
 			if(ltype == STRING || rtype == STRING) {
+				if(ltype != STRING) {
+					l = ast_create_expr_node(l, STRVAL, NO_NODE);
+				}
+				if(rtype != STRING) {
+					r = ast_create_expr_node(r, STRVAL, NO_NODE);
+				}
 				node = ast_create_node(EXPR_BINARY);
 				node->expr.data_type = STRING;
+				op = STRCAT;
 				goto success;
 			}
 		case SUB:
