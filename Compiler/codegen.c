@@ -482,11 +482,7 @@ void emit_func_param(const AST_FUNC *func, int set_idx)
 		if(set_idx) params->var.idx = i;
 		i++;
 
-		if(params->var.data_type != INT) {
-			printf("/* ERROR: only integer type are supported */ int");
-		} else {
-			printf("/* %s */ int", params->var.symbol->name);
-		}
+		printf("/* %s */ %s", params->var.symbol->name, get_type(params->var.data_type));
 
 		params = params->next;
 	}
