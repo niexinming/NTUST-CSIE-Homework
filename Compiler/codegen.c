@@ -16,7 +16,7 @@ const char *get_type(int typecode)
 	switch(typecode) {
 		case BOOL: return "boolean";
 		case INT: return "int";
-		// case REAL: return "double";
+		case REAL: return "double";
 		case STRING: return JAVA_STRING;
 		case VOID: return "void";
 		default: return "void /* ERROR: unsupported type */";
@@ -93,6 +93,7 @@ void scan_local_vars(const AST_NODE *prog, int *i)
 			AST_VAR *var = (AST_VAR *)&prog->var;
 			printf("/* local var: %s, %d */\n", var->symbol->name, *i);
 			var->idx = (*i)++;
+			if(var->data_type == REAL) (*i)++;
 		} else if(prog->type == FOR_STMT) {
 			scan_local_vars(prog->for_stmt.init, i);
 			scan_local_vars(prog->for_stmt.body, i);
@@ -138,11 +139,39 @@ int emit_val(const AST_VALUE *val)
 		printf("iconst_%d\n", val->integer ? 1 : 0);
 	} else if (val->data_type == STRING) {
 		printf("ldc "); ast_dump_str(val->string); putchar('\n');
+	} else if (val->data_type == REAL) {
+		printf("ldc2_w %lf\n", val->real);
 	} else {
 		printf("/* ERROR: unsupported value type */\n");
 		cgerror("unsupported value type");
 	}
 	return val->data_type;
+}
+
+void emit_convert(int from, int to)
+{
+	if(from == to) {
+		return;
+	}
+
+	switch(from) {
+		case BOOL:
+		case INT:
+			if(to == BOOL || to == INT) {
+				return;
+			}
+			puts("i2d");
+			break;
+		case REAL:
+			puts("d2i");
+			break;
+		case STRING:
+			cgerror("can not covnert from string");
+			break;
+		case VOID:
+			cgerror("convert from error");
+			break;
+	}
 }
 
 int emit_unary_expr(const AST_NODE *node)
@@ -180,11 +209,17 @@ int emit_unary_expr(const AST_NODE *node)
 	return expr->data_type;
 }
 
-void emit_binary_cond(const char *opcode)
+void emit_binary_cond(const char *opcode, int typecode)
 {
 	int label = NEW_LABEL;
-	puts("/* begin binary cond */");
-	puts("isub");
+	printf("/* begin binary cond, typecode = %d */\n", typecode);
+	if(typecode == INT || typecode == BOOL) {
+		puts("isub");
+	} else if (typecode == REAL) {
+		puts("dcmpl");
+	} else {
+		cgerror("unsupported data type in emit_binary_cond");
+	}
 	emit_label(opcode, label, "cond_true");
 	puts("iconst_0");
 	emit_label("goto", label, "cond_end");
@@ -194,30 +229,71 @@ void emit_binary_cond(const char *opcode)
 	puts("/* end binary cond */");
 }
 
+const char *numerical_op(int op, int typecode)
+{
+	if(typecode == INT) {
+		switch(op) {
+			case ADD: return "iadd";
+			case SUB: return "isub";
+			case DIV: return "idiv";
+			case MOD: return "irem";
+			case MUL: return "imul";
+		}
+		cgerror("unsupported op");
+		goto err;
+	} else if(typecode == REAL) {
+		switch(op) {
+			case ADD: return "dadd";
+			case SUB: return "dsub";
+			case DIV: return "ddiv";
+			case MOD: return "drem";
+			case MUL: return "dmul";
+		}
+		cgerror("unsupported op");
+		goto err;
+	}
+	cgerror("unsupported type");
+err:
+	return "iadd /* unsupported op */";
+}
+
 int emit_binary_expr(const AST_NODE *node)
 {
 	const AST_EXPR *expr = &node->expr;
-	emit_expr(expr->lval);
-	emit_expr(expr->rval);
+	int t;
+
+	t = emit_expr(expr->lval);
+	if(expr->data_type == REAL) emit_convert(t, REAL);
+	t = emit_expr(expr->rval);
+	if(expr->data_type == REAL) emit_convert(t, REAL);
+
 	switch(expr->op) {
+		// string only
 		case STREQU: printf("invokevirtual boolean %s.equals(java.lang.Object)\n", JAVA_STRING); break;
 		case STRCAT: printf("invokevirtual %1$s %1$s.concat(%1$s)\n", JAVA_STRING); break;
-		case ADD: puts("iadd"); break;
-		case SUB: puts("isub"); break;
-		case DIV: puts("idiv"); break;
-		case MOD: puts("irem"); break;
-		case MUL: puts("imul"); break;
+
+		// numerical operation
+		case ADD:
+		case SUB:
+		case DIV:
+		case MOD:
+		case MUL: puts(numerical_op(expr->op, expr->data_type)); break;
+
+		case EQ:  emit_binary_cond("ifeq", expr->data_type); break;
+		case NEQ: emit_binary_cond("ifne", expr->data_type); break;
+		case LT:  emit_binary_cond("iflt", expr->data_type); break;
+		case GT:  emit_binary_cond("ifgt", expr->data_type); break;
+		case LTE: emit_binary_cond("ifle", expr->data_type); break;
+		case GTE: emit_binary_cond("ifge", expr->data_type); break;
+
+		// int only
 		case XOR: puts("ixor"); break;
-		case EQ:  emit_binary_cond("ifeq"); break;
-		case NEQ: emit_binary_cond("ifne"); break;
-		case LT:  emit_binary_cond("iflt"); break;
-		case GT:  emit_binary_cond("ifgt"); break;
-		case LTE: emit_binary_cond("ifle"); break;
-		case GTE: emit_binary_cond("ifge"); break;
 		case BITWISE_AND:
 		case LOGICAL_AND: puts("iand"); break;
 		case BITWISE_OR:
 		case LOGICAL_OR:  puts("ior"); break;
+
+		// special
 		case ARRGET:      puts(op_arr_get(expr->data_type)); break;
 		default: printf("iadd /* ERROR: unsupported operator: %d */\n", expr->op); break;
 	}
@@ -266,7 +342,8 @@ int emit_invoke(const AST_INVOKE *invoke)
 void emit_assign(const AST_ASSIGN *assign)
 {
 	if(assign->index == NO_NODE) {
-		emit_expr(assign->rval);
+		int t = emit_expr(assign->rval);
+		emit_convert(t, assign->lval->data_type);
 		emit_atomic_store(assign->lval);
 	} else {
 		// assign to array
@@ -276,7 +353,8 @@ void emit_assign(const AST_ASSIGN *assign)
 
 		emit_load_var(assign->lval);
 		emit_expr(assign->index);
-		emit_expr(assign->rval);
+		int t = emit_expr(assign->rval);
+		emit_convert(t, assign->lval->data_type);
 		switch(assign->lval->data_type) {
 			case BOOL:
 			case INT: puts("iastore"); break;
@@ -481,6 +559,7 @@ void emit_func_param(const AST_FUNC *func, int set_idx)
 		if(i) printf(", ");
 		if(set_idx) params->var.idx = i;
 		i++;
+		if(params->var.data_type == REAL) i++;
 
 		printf("/* %s */ %s", params->var.symbol->name, get_type(params->var.data_type));
 

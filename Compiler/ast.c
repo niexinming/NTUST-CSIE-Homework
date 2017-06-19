@@ -596,10 +596,6 @@ AST_NODE* ast_create_expr_node(const AST_NODE *l, int op, const AST_NODE *r)
 		case MUL:
 		case DIV:
 		case MOD:
-			if(ltype != rtype) {
-				asterror("type mismatch in arithmetic opterator");
-				assert(NULL); return NULL;;
-			}
 			if(ltype == BOOL) {
 				asterror("BOOL is not allowed in arithmetic operator");
 				assert(NULL); return NULL;;
