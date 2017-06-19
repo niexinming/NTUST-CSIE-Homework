@@ -93,7 +93,7 @@ void emit_local_vars(const AST_NODE *prog, int *i)
 int emit_load_var(const AST_VAR *var)
 {
 	const char *vname = var->symbol->name;
-	printf("/* load var %s (%d) $%p */\n", vname, var->idx, var);
+	printf("/* load var %s (%d) */\n", vname, var->idx);
 
 	if(var->idx == -1) { // global variable / constants
 		printf("getstatic %s prog.%s\n", get_type(var->data_type), vname);
