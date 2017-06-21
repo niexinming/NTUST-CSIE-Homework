@@ -1,4 +1,12 @@
+var gg[87] int
+
 func void main( ) {
+	println "test global array"
+	gg[76] = 99
+	println gg[0]
+	println gg[76]
+
+	println "test local array"
 	var c[5] int
 	var s[5] string
 
