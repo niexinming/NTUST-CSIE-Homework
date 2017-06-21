@@ -11,6 +11,8 @@ int lblid = 0;
 
 const char *JAVA_STRING = "java.lang.String";
 
+VARLIST *gvars = NULL;
+
 const char *get_type(int typecode)
 {
 	switch(typecode) {
@@ -50,6 +52,9 @@ const char *op_arr_get(int typecode)
 
 const char *op_set(const AST_VAR *var)
 {
+	if(var->array_size > 0) {
+		return "astore";
+	}
 	switch(var->data_type) {
 		case BOOL:
 		case INT: return "istore";
@@ -68,7 +73,12 @@ void emit_global_vars(AST_NODE *prog)
 			const char *vname = var->symbol->name;
 			const char *vtype = get_type(var->data_type);
 
-			printf("field static %s %s", vtype, vname);
+			VARLIST *v = malloc(sizeof(VARLIST));
+			v->var = var;
+			v->next = gvars;
+			gvars = v;
+
+			printf("field static %s%s %s", vtype, var->array_size > 0 ? "[]" : "", vname);
 			if(var->val != NO_NODE) {
 				if(var->data_type == INT) {
 					printf(" = %d", var->val->integer);
@@ -111,7 +121,7 @@ int emit_load_var(const AST_VAR *var)
 	printf("/* load var %s (%d) */\n", vname, var->idx);
 
 	if(var->idx == -1) { // global variable / constants
-		printf("getstatic %s prog.%s\n", get_type(var->data_type), vname);
+		printf("getstatic %s%s prog.%s\n", get_type(var->data_type), var->array_size > 0 ? "[]" : "", vname);
 	} else { // function arguments or local variable
 		printf("%s %d\n", op_get(var), var->idx);
 	}
@@ -125,7 +135,7 @@ void emit_atomic_store(const AST_VAR *var)
 	printf("/* store var %s (%d) */\n", vname, var->idx);
 
 	if(var->idx == -1) { // global
-		printf("putstatic %s prog.%s\n", get_type(var->data_type), vname);
+		printf("putstatic %s%s prog.%s\n", get_type(var->data_type), var->array_size > 0 ? "[]" : "", vname);
 	} else { // local
 		printf("%s %d\n", op_set(var), var->idx);
 	}
@@ -478,7 +488,7 @@ void emit_return(const AST_NODE *expr)
 	}
 }
 
-void emit_local_var(const AST_VAR *var)
+void emit_var(const AST_VAR *var)
 {
 	if(var->val != NO_NODE) {
 		// non-array
@@ -491,7 +501,7 @@ void emit_local_var(const AST_VAR *var)
 		printf("sipush %d\n", var->array_size);
 		if(var->data_type == STRING) putchar('a'); // anewarray
 		printf("newarray %s\n", get_type(var->data_type));
-		printf("astore %d\n", var->idx);
+		emit_atomic_store(var);
 	} else {
 		printf("/* var#%-2d %s has no val */\n", var->idx, var->symbol->name);
 	}
@@ -523,7 +533,7 @@ void emit_stmts(const AST_NODE *stmt)
 				emit_read(stmt);
 				break;
 			case VAR_DECL:
-				emit_local_var(&stmt->var);
+				emit_var(&stmt->var);
 				break;
 
 			case CONST_VAL:
@@ -579,6 +589,13 @@ void emit_funcs(AST_NODE *prog)
 				puts("max_stack 30");
 				puts("max_locals 30");
 				puts("{");
+				puts("/* init global array */");
+				VARLIST *v = gvars;
+				while(v) {
+					emit_var(v->var);
+					v = v->next;
+				}
+				puts("/* begin program */");
 				emit_func_body(func);
 				puts("return");
 				puts("}\n");

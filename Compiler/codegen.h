@@ -3,6 +3,11 @@
 
 #include "ast.h"
 
+typedef struct VARLIST_s {
+	AST_VAR *var;
+	struct VARLIST_s *next;
+} VARLIST;
+
 void codegen(AST_NODE *prog);
 void emit_label(const char * prefix, int lblid, const char *subid);
 void emit_label_def(int lblid, const char *subid);
