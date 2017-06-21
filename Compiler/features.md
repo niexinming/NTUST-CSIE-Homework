@@ -5,3 +5,4 @@
 3. `read` support
 4. Self-recursion support
 5. array support (any types)
+6. Auto typecast between `real` and `int`

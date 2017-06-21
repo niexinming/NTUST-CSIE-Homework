@@ -158,30 +158,36 @@ int emit_val(const AST_VALUE *val)
 	return val->data_type;
 }
 
-void emit_convert(int from, int to)
+int emit_convert(int from, int to)
 {
 	if(from == to) {
-		return;
+		return 1;
 	}
 
 	switch(from) {
 		case BOOL:
 		case INT:
 			if(to == BOOL || to == INT) {
-				return;
+				return 1;
 			} else if(to == REAL) {
 				puts("i2d");
+				return 1;
+			} else {
+				return 0;
 			}
 			break;
 		case REAL:
-			puts("d2i");
+			if(to == BOOL || to == INT) {
+				puts("d2i");
+				return 1;
+			} else {
+				return 0;
+			}
 			break;
 		case STRING:
-			cgerror("can not covnert from string");
-			break;
+			return 0;
 		case VOID:
-			cgerror("convert from error");
-			break;
+			return 0;
 	}
 }
 
@@ -284,9 +290,13 @@ int emit_binary_expr(const AST_NODE *node)
 	}
 
 	emit_expr(expr->lval);
-	emit_convert(ltype, last_type);
+	if(!emit_convert(ltype, last_type)) {
+		cgerror("can not convert types in binary expr");
+	}
 	emit_expr(expr->rval);
-	emit_convert(rtype, last_type);
+	if(!emit_convert(rtype, last_type)) {
+		cgerror("can not convert types in binary expr");
+	}
 
 	switch(expr->op) {
 		// string only
@@ -345,10 +355,16 @@ int emit_invoke(const AST_INVOKE *invoke)
 {
 	const AST_FUNC *func = invoke->func;
 	const AST_NODE *arg = invoke->args;
+	const AST_NODE *param = func->params;
 
 	while(arg != NO_NODE) {
-		emit_expr(arg);
+		int t = emit_expr(arg);
+		int dt = param->var.data_type;
+		if(!emit_convert(t, dt)) {
+			cgerror("mismatch data type in function invoke");
+		}
 		arg = arg->next;
+		param = param->next;
 	}
 
 	const char *fname = func->symbol->name;
@@ -364,7 +380,9 @@ void emit_assign(const AST_ASSIGN *assign)
 {
 	if(assign->index == NO_NODE) {
 		int t = emit_expr(assign->rval);
-		emit_convert(t, assign->lval->data_type);
+		if(!emit_convert(t, assign->lval->data_type)) {
+			cgerror("can not convert data type in assignment");
+		}
 		emit_atomic_store(assign->lval);
 	} else {
 		// assign to array
@@ -375,7 +393,9 @@ void emit_assign(const AST_ASSIGN *assign)
 		emit_load_var(assign->lval);
 		emit_expr(assign->index);
 		int t = emit_expr(assign->rval);
-		emit_convert(t, assign->lval->data_type);
+		if(!emit_convert(t, assign->lval->data_type)) {
+			cgerror("can not convert data type in assignment");
+		}
 		switch(assign->lval->data_type) {
 			case BOOL:
 			case INT: puts("iastore"); break;
