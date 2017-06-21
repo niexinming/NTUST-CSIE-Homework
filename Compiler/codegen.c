@@ -144,7 +144,7 @@ void emit_atomic_store(const AST_VAR *var)
 int emit_val(const AST_VALUE *val)
 {
 	if(val->data_type == INT) {
-		printf("sipush %d\n", val->integer);
+		printf("ldc %d\n", val->integer);
 	} else if (val->data_type == BOOL) {
 		printf("iconst_%d\n", val->integer ? 1 : 0);
 	} else if (val->data_type == STRING) {
@@ -169,8 +169,9 @@ void emit_convert(int from, int to)
 		case INT:
 			if(to == BOOL || to == INT) {
 				return;
+			} else if(to == REAL) {
+				puts("i2d");
 			}
-			puts("i2d");
 			break;
 		case REAL:
 			puts("d2i");
@@ -192,7 +193,11 @@ int emit_unary_expr(const AST_NODE *node)
 
 	switch(expr->op) {
 		case NEGATIVE:
-			puts("ineg");
+			if(dtype == REAL) {
+				puts("dneg");
+			} else {
+				puts("ineg");
+			}
 			break;
 		case LOGICAL_NOT:
 			label = NEW_LABEL;
@@ -213,7 +218,7 @@ int emit_unary_expr(const AST_NODE *node)
 			printf("invokestatic %s java.lang.String.valueOf(%s)\n", JAVA_STRING, get_type(dtype));
 			break;
 		default:
-			printf("sipush 0 /* ERROR: unsupported operator: %d */\n", expr->op);
+			printf("iconst_0 /* ERROR: unsupported operator: %d */\n", expr->op);
 	}
 
 	return expr->data_type;
@@ -270,12 +275,18 @@ err:
 int emit_binary_expr(const AST_NODE *node)
 {
 	const AST_EXPR *expr = &node->expr;
-	int t;
+	int ltype = ast_get_expr_type(expr->lval);
+	int rtype = ast_get_expr_type(expr->rval);
+	int last_type = ltype;
 
-	t = emit_expr(expr->lval);
-	if(expr->data_type == REAL && expr->op != ARRGET) emit_convert(t, REAL);
-	t = emit_expr(expr->rval);
-	if(expr->data_type == REAL && expr->op != ARRGET) emit_convert(t, REAL);
+	if(ltype == REAL || rtype == REAL) {
+		last_type = REAL;
+	}
+
+	emit_expr(expr->lval);
+	emit_convert(ltype, last_type);
+	emit_expr(expr->rval);
+	emit_convert(rtype, last_type);
 
 	switch(expr->op) {
 		// string only
@@ -289,12 +300,12 @@ int emit_binary_expr(const AST_NODE *node)
 		case MOD:
 		case MUL: puts(numerical_op(expr->op, expr->data_type)); break;
 
-		case EQ:  emit_binary_cond("ifeq", expr->data_type); break;
-		case NEQ: emit_binary_cond("ifne", expr->data_type); break;
-		case LT:  emit_binary_cond("iflt", expr->data_type); break;
-		case GT:  emit_binary_cond("ifgt", expr->data_type); break;
-		case LTE: emit_binary_cond("ifle", expr->data_type); break;
-		case GTE: emit_binary_cond("ifge", expr->data_type); break;
+		case EQ:  emit_binary_cond("ifeq", last_type); break;
+		case NEQ: emit_binary_cond("ifne", last_type); break;
+		case LT:  emit_binary_cond("iflt", last_type); break;
+		case GT:  emit_binary_cond("ifgt", last_type); break;
+		case LTE: emit_binary_cond("ifle", last_type); break;
+		case GTE: emit_binary_cond("ifge", last_type); break;
 
 		// int only
 		case XOR: puts("ixor"); break;
@@ -485,7 +496,9 @@ void emit_return(const AST_NODE *expr)
 	}
 	int type = emit_expr(expr);
 	switch(type) {
+		case BOOL:
 		case INT: puts("ireturn"); break;
+		case REAL: puts("dreturn"); break;
 		case STRING: puts("areturn"); break;
 		default: puts("return /* ERROR: unknown return type */"); break;
 	}
@@ -550,20 +563,18 @@ void emit_stmts(const AST_NODE *stmt)
 	}
 }
 
-void emit_func_body(AST_FUNC *func)
+void emit_func_body(AST_FUNC *func, int arg_stack_size)
 {
 	if(func->body == NO_NODE) {
 		puts("/* func body is empty */");
 		return;
 	}
 
-	int pcount = func->param_count;
-	if(strcmp(func->symbol->name, "main") == 0) pcount = 1;
-	scan_local_vars(func->body, &pcount);
+	scan_local_vars(func->body, &arg_stack_size);
 	emit_stmts(func->body);
 }
 
-void emit_func_param(const AST_FUNC *func, int set_idx)
+int emit_func_param(const AST_FUNC *func, int set_idx)
 {
 	AST_NODE *params = (AST_NODE *)func->params;
 	int i = 0;
@@ -578,6 +589,8 @@ void emit_func_param(const AST_FUNC *func, int set_idx)
 
 		params = params->next;
 	}
+
+	return i;
 }
 
 void emit_funcs(AST_NODE *prog)
@@ -605,30 +618,34 @@ void emit_funcs(AST_NODE *prog)
 					v = v->next;
 				}
 				puts("/* begin program */");
-				emit_func_body(func);
+				emit_func_body(func, 1);
 				puts("return");
 				puts("}\n");
 			} else {
-				const char *ftype = "void";
-				if(func->return_type == INT) {
-					ftype = "int";
-				} else if (func->return_type != VOID) {
-					printf("/* ERROR: only support int return type */");
-				}
-				printf("method public static %s %s(", ftype, fname);
-				emit_func_param(func, 1);
+				printf("method public static %s %s(", get_type(func->return_type), fname);
+				int stack_arg_size = emit_func_param(func, 1);
 				printf(")\n");
 				puts("max_stack 30");
 				puts("max_locals 30");
 				puts("{");
-				emit_func_body(func);
-				if(func->return_type == INT) {
-					puts("/* function end */");
-					puts("sipush 0"); // RETURN 0
-					puts("ireturn");
-				} else {
-					puts("/* function end */");
-					puts("return");
+				emit_func_body(func, stack_arg_size);
+				puts("/* function end */");
+				switch(func->return_type) {
+					case BOOL:
+					case INT:
+						puts("iconst_0"); // RETURN 0
+						puts("ireturn");
+						break;
+					case REAL:
+						puts("iconst_0"); // RETURN 0
+						puts("i2d");
+						puts("dreturn");
+						break;
+					case VOID:
+						puts("return");
+						break;
+					default:
+						cgerror("unknown return type");
 				}
 				puts("}\n");
 			}
