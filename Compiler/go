@@ -3,7 +3,7 @@
 echo "[*] Compile to jasm"
 ./goc "$1" > prog.jasm || exit 1
 echo "[*] Run assembler"
-./javaa/javaa prog.jasm || exit 1
+./javaa/javaa prog.jasm > /dev/null || exit 1
 echo "[*] Execute program"
 shift
 exec java prog "$@"
