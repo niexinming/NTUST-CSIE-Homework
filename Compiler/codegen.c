@@ -664,6 +664,9 @@ void emit_funcs(AST_NODE *prog)
 					case VOID:
 						puts("return");
 						break;
+					case STRING:
+						puts("areturn");
+						break;
 					default:
 						cgerror("unknown return type");
 				}
