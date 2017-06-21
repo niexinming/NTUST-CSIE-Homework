@@ -567,7 +567,7 @@ void emit_func_param(const AST_FUNC *func, int set_idx)
 	}
 }
 
-void emit_funcs(AST_NODE *prog, int main)
+void emit_funcs(AST_NODE *prog)
 {
 	while(prog != NO_NODE) {
 		if(prog->type == FUNC_DECL) {
@@ -619,6 +619,6 @@ void codegen(AST_NODE *prog)
 	puts("{");
 	emit_global_vars(prog);
 	putchar('\n');
-	emit_funcs(prog, 1); // emit main func first
+	emit_funcs(prog);
 	puts("}");
 }
