@@ -457,18 +457,21 @@ void emit_read(const AST_NODE *expr)
 	}
 
 	const AST_VAR *var = &expr->child->var;
+	puts("getstatic java.util.Scanner prog._read_scanner");
 
 	switch(var->data_type) {
 		case BOOL:
 		case INT:
-			puts("invokestatic int Reader.readInteger()");
+			puts("invokevirtual int java.util.Scanner.nextInt()");
 			break;
 		case REAL:
-			puts("invokestatic double Reader.readDouble()");
+			puts("invokevirtual double java.util.Scanner.nextDouble()");
 			break;
 		case STRING:
-			printf("invokestatic %s Reader.readLine()\n", JAVA_STRING);
+			printf("invokevirtual %s java.util.Scanner.nextLine()\n", JAVA_STRING);
 			break;
+		default:
+			cgerror("unsupported read type");
 	}
 
 	emit_atomic_store(var);
@@ -589,6 +592,12 @@ void emit_funcs(AST_NODE *prog)
 				puts("max_stack 30");
 				puts("max_locals 30");
 				puts("{");
+				puts("/* init scanner */");
+				puts("new java.util.Scanner");
+				puts("dup");
+				puts("getstatic java.io.InputStream java.lang.System.in");
+				puts("invokenonvirtual void java.util.Scanner.<init>(java.io.InputStream)");
+				puts("putstatic java.util.Scanner prog._read_scanner");
 				puts("/* init global array */");
 				VARLIST *v = gvars;
 				while(v) {
@@ -634,6 +643,7 @@ void codegen(AST_NODE *prog)
 
 	printf("class prog");
 	puts("{");
+	puts("field static java.util.Scanner _read_scanner");
 	emit_global_vars(prog);
 	putchar('\n');
 	emit_funcs(prog);
