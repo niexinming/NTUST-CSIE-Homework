@@ -273,9 +273,9 @@ int emit_binary_expr(const AST_NODE *node)
 	int t;
 
 	t = emit_expr(expr->lval);
-	if(expr->data_type == REAL) emit_convert(t, REAL);
+	if(expr->data_type == REAL && expr->op != ARRGET) emit_convert(t, REAL);
 	t = emit_expr(expr->rval);
-	if(expr->data_type == REAL) emit_convert(t, REAL);
+	if(expr->data_type == REAL && expr->op != ARRGET) emit_convert(t, REAL);
 
 	switch(expr->op) {
 		// string only
@@ -368,7 +368,7 @@ void emit_assign(const AST_ASSIGN *assign)
 		switch(assign->lval->data_type) {
 			case BOOL:
 			case INT: puts("iastore"); break;
-			case REAL: puts("fastore"); break;
+			case REAL: puts("dastore"); break;
 			case STRING: puts("aastore"); break;
 		}
 	}
