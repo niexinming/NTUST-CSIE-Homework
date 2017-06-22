@@ -383,6 +383,12 @@ func_type_id :
                 $$ = $3->meta = ast_create_func_node($3, $2.t, NO_NODE, NO_NODE);
                 begin_context();
              }
+             |
+             FUNC id {
+                trace("func type id");
+                $$ = $2->meta = ast_create_func_node($2, VOID, NO_NODE, NO_NODE);
+                begin_context();
+             }
              ;
 
 func_head :
