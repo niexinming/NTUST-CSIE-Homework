@@ -285,6 +285,13 @@ int emit_binary_expr(const AST_NODE *node)
 	int rtype = ast_get_expr_type(expr->rval);
 	int last_type = ltype;
 
+	if(expr->op == ARRGET) {
+		emit_expr(expr->lval);
+		emit_expr(expr->rval);
+		puts(op_arr_get(expr->data_type));
+		return expr->data_type;
+	}
+
 	if(ltype == REAL || rtype == REAL) {
 		last_type = REAL;
 	}
@@ -324,8 +331,6 @@ int emit_binary_expr(const AST_NODE *node)
 		case BITWISE_OR:
 		case LOGICAL_OR:  puts("ior"); break;
 
-		// special
-		case ARRGET:      puts(op_arr_get(expr->data_type)); break;
 		default: printf("iadd /* ERROR: unsupported operator: %d */\n", expr->op); break;
 	}
 	return expr->data_type;
